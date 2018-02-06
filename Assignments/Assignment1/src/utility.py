@@ -10,8 +10,8 @@ import ipdb as pdb
 batch_size = 64
 valid_size = 0.1 # 10 percent of train data is used for validation
 def load_dataset():
+    print "Loading dataset:"
     # Data Preprocessing: define a transformer to be used by data loader
-
     mnist_transforms = torchvision.transforms.Compose(
             [torchvision.transforms.ToTensor()])
 
@@ -47,12 +47,10 @@ def load_dataset():
     test_loader = torch.utils.data.DataLoader(
             mnist_test, batch_size=batch_size, shuffle=True, num_workers=1)
 
-
-    plot_sample_data(mnist_train)
-
-    return train_loader, test_loader
+    return train_loader, valid_loader, test_loader
 
 def plot_sample_data(dataset, batch_size=9, plot_name="Title"):
+    print "Plotting sample data"
     sample_loader = torch.utils.data.DataLoader(dataset, 
                                                 batch_size=9, 
                                                 shuffle=True, 
@@ -64,6 +62,7 @@ def plot_sample_data(dataset, batch_size=9, plot_name="Title"):
     plot_images(X, labels, plot_name)
 
 
+# plot only a batch of 9 images in a 3 by 3 plot
 def plot_images(images, labels, plot_name="Title"):
 
     assert len(images) == len(labels) == 9
