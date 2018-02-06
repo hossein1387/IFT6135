@@ -67,7 +67,6 @@ def record_performance():
 def train_model():
     losses = 0
     iter = 0
-    print("salam rayeheh jooooooon")
     # record the performance for this epoch
     record_performance()
     for epoch in range(num_epochs):
