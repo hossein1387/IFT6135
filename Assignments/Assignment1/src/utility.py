@@ -47,6 +47,7 @@ def load_dataset():
     test_loader = torch.utils.data.DataLoader(
             mnist_test, batch_size=batch_size, shuffle=True, num_workers=1)
 
+
     plot_sample_data(mnist_train)
 
     return train_loader, test_loader
@@ -63,12 +64,14 @@ def plot_sample_data(dataset, batch_size=9, plot_name="Title"):
     plot_images(X, labels, plot_name)
 
 
-def plot_images(images, labels, cls_pred=None):
+def plot_images(images, labels, plot_name="Title"):
 
     assert len(images) == len(labels) == 9
 
     # Create figure with sub-plots.
     fig, axes = plt.subplots(3, 3)
+    if plot_name is not "Title":
+        plt.suptitle(plot_name)
 
     for i, ax in enumerate(axes.flat):
         # plot the image
@@ -79,4 +82,3 @@ def plot_images(images, labels, cls_pred=None):
         ax.set_xticks([])
         ax.set_yticks([])
     plt.show()
-
