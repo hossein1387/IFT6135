@@ -4,10 +4,11 @@ import torch.optim as optim
 from torch.autograd import Variable
 import ipdb as pdb
 import utility
+import numpy as np
 
 # Global Variables
 num_epochs = 10
-lr0 = 0.02
+lr0 = 0.005
 model_type = 'MLP'
 store_every = 1000
 # Records the model's performance
@@ -22,11 +23,11 @@ class MLP(nn.Module):
     def __init__(self):
         super(MLP, self).__init__()
         self.model = nn.Sequential(
-            nn.Linear(784, 600),
+            nn.Linear(784, 1024),
             nn.ReLU(),
-            nn.Linear(600, 100),
+            nn.Linear(1024, 128),
             nn.ReLU(),
-            nn.Linear(100, 10))
+            nn.Linear(128, 10))
 
     def forward(self, x):
         output = self.model(x)
@@ -41,12 +42,12 @@ def evaluate(dataset_loader):
     for batch in dataset_loader:
         data, labels = batch
         if not isinstance(data, Variable):
-           data = Variable(data)
-           labels = Variable(labels)
+           data = Variable(data).view(-1,784)
+           labels = Variable(labels).view(-1)
         output = model(data)
-        loss = criterion(model(x), y)
+        loss = criterion(model(data), labels)
         prediction = torch.max(output.data, 1)[1]
-        accuracy = (prediction.eq(labels.data).sum() / labels.size(0)) * 100
+        accuracy = (prediction.eq(labels.data).sum() / float(labels.size(0))) * 100
     return loss.data[0], accuracy
 
 def record_performance(dataloader, type="none"):
@@ -55,16 +56,19 @@ def record_performance(dataloader, type="none"):
         train_loss, train_acc = evaluate(dataloader)
         train_record[0].append(train_loss)
         train_record[1].append(train_acc)
-    elif type is "valid":
-        # Record valid accuracy
-        valid_loss, valid_acc = evaluate(dataloader)
-        valid_record[0].append(valid_loss)
-        valid_record[1].append(valid_acc)
+        return train_loss, train_acc
     elif type is "test":
         # Record test accuracy
         test_loss, test_acc = evaluate(dataloader)
         test_record[0].append(test_loss)
         test_record[1].append(test_acc)
+        return test_loss, test_acc
+    elif type is "valid":
+        # Record valid accuracy
+        valid_loss, valid_acc = evaluate(dataloader)
+        valid_record[0].append(valid_loss)
+        valid_record[1].append(valid_acc)
+        return valid_loss, valid_acc
     else:
         raise ValueError("unknown data type was passed for performance recording")
 
@@ -80,18 +84,18 @@ def train_model():
             x, y = batch
             x = Variable(x).view(-1,784)
             y = Variable(y).view(-1)
-
+            optimizer.zero_grad()
             # compute loss
             loss = criterion(model(x), y)
             # compute gradients and update parameters
             loss.backward()
             # take one SGD step
             optimizer.step()
-            
+        
         # record the performance for this epoch
-        record_performance()
+        train_loss, train_acc = record_performance(test_loader, "test")
         # print the results for this epoch
-        print("Epoch {0} \nLoss : {1:.3f} \nAcc : {2:.3f}".format(epoch, valid_loss, valid_acc))
+        print("Epoch {0} \nLoss : {1:.3f} \nAcc : {2:.3f}".format(epoch, train_loss, train_acc))
 
 #            pdb.set_trace()
 

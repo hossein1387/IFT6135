@@ -7,10 +7,10 @@ import matplotlib.pyplot as plt
 from torch.utils.data.sampler import SubsetRandomSampler
 import ipdb as pdb
 
-batch_size = 64
+batch_size = 100
 valid_size = 0.1 # 10 percent of train data is used for validation
 def load_dataset():
-    print "Loading dataset:"
+    print "Loading dataset..."
     # Data Preprocessing: define a transformer to be used by data loader
     mnist_transforms = torchvision.transforms.Compose(
             [torchvision.transforms.ToTensor()])
