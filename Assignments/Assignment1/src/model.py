@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
 import ipdb as pdb
-import utility
+from Assignments.Assignment1.src.utility2 import load_dataset
 import numpy as np
 
 # Global Variables
@@ -76,7 +76,7 @@ def train_model():
     losses = 0
     iter = 0
     # record the performance for this epoch
-    train_loader, valid_loader, test_loader = utility.load_dataset()
+    train_loader, valid_loader, test_loader = load_dataset()
     record_performance(test_loader, "test")
     for epoch in range(num_epochs):
         for batch in train_loader:
