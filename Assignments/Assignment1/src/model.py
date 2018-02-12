@@ -8,7 +8,7 @@ import numpy as np
 
 # Global Variables
 num_epochs = 10
-lr0 = 0.005
+lr0 = 0.01
 model_type = 'MLP'
 store_every = 1000
 # Records the model's performance
@@ -23,11 +23,11 @@ class MLP(nn.Module):
     def __init__(self):
         super(MLP, self).__init__()
         self.model = nn.Sequential(
-            nn.Linear(784, 1024),
+            nn.Linear(784, 600),
             nn.ReLU(),
-            nn.Linear(1024, 128),
+            nn.Linear(600, 100),
             nn.ReLU(),
-            nn.Linear(128, 10))
+            nn.Linear(100, 10))
 
     def forward(self, x):
         output = self.model(x)
@@ -36,7 +36,7 @@ class MLP(nn.Module):
 model = MLP()
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(model.parameters(), lr=lr0)
-
+#pdb.set_trace()
 
 def evaluate(dataset_loader):
     for batch in dataset_loader:
@@ -72,6 +72,9 @@ def record_performance(dataloader, type="none"):
     else:
         raise ValueError("unknown data type was passed for performance recording")
 
+#def init_params(model):
+#    conv1Params = list(net.conv1.parameters())
+
 def train_model():
     losses = 0
     iter = 0
@@ -96,6 +99,7 @@ def train_model():
         train_loss, train_acc = record_performance(test_loader, "test")
         # print the results for this epoch
         print("Epoch {0} \nLoss : {1:.3f} \nAcc : {2:.3f}".format(epoch, train_loss, train_acc))
+    utility.plot_sample_data(test_record, "Test")
 
 #            pdb.set_trace()
 

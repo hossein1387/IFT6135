@@ -49,7 +49,7 @@ def load_dataset():
 
     return train_loader, valid_loader, test_loader
 
-def plot_sample_data(dataset, batch_size=9, plot_name="Title"):
+def plot_sample_image(dataset, batch_size=9, plot_name="Title"):
     print "Plotting sample data"
     sample_loader = torch.utils.data.DataLoader(dataset, 
                                                 batch_size=9, 
@@ -61,6 +61,19 @@ def plot_sample_data(dataset, batch_size=9, plot_name="Title"):
     X = np.transpose(X, [0, 2, 3, 1])
     plot_images(X, labels, plot_name)
 
+def plot_sample_data(data, plot_name, type="accuracy"):
+    print("Plotting sample data {0}".format(plot_name))
+    accuracy = data[1]
+    loss = data[0]
+    assert (len(accuracy)==len(loss))
+    x = range(0, len(loss))
+#    plt.scatter(m, n)
+    acc_plt  = plt.plot(x, accuracy, color='r', label='accuracy')
+    if type!="accuracy":
+        loss_plt = plt.plot(x, loss, color='g', label='loss')
+        plt.legend([acc_plt, loss_plt], ['accuracy Up', 'loss'])
+    plt.title(plot_name)
+    plt.show()
 
 # plot only a batch of 9 images in a 3 by 3 plot
 def plot_images(images, labels, plot_name="Title"):
