@@ -1,53 +1,37 @@
 import torch
-import torchvision
-import torchvision.transforms
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-from torch.utils.data.sampler import SubsetRandomSampler
 import ipdb as pdb
+import pickle
+import os
+import sys
 
-batch_size = 100
-valid_size = 0.1 # 10 percent of train data is used for validation
-def load_dataset():
-    print "Loading dataset..."
-    # Data Preprocessing: define a transformer to be used by data loader
-    mnist_transforms = torchvision.transforms.Compose(
-            [torchvision.transforms.ToTensor()])
-
-    # Use defined transformer to load MNIST data for test and train
-    mnist_train = torchvision.datasets.MNIST(
-            root='./data', train=True, 
-            transform=mnist_transforms, download=True)
-    mnist_test = torchvision.datasets.MNIST(
-            root='./data', train=False, 
-            transform=mnist_transforms, download=True)
-
-    mnist_valid = torchvision.datasets.MNIST(
-            root='./data', train=True, 
-            transform=mnist_transforms, download=True)
-
-    num_train = len(mnist_train)
-    indices = list(range(num_train))
-    split = int(np.floor(valid_size * num_train))
-
-    # split train set into train and validation set
-    train_idx, valid_idx = indices[split:], indices[:split]
-
-    train_sampler = SubsetRandomSampler(train_idx)
-    valid_sampler = SubsetRandomSampler(valid_idx)
-
-    # Load to local variable
-    train_loader = torch.utils.data.DataLoader(mnist_train, 
-                    batch_size=batch_size, sampler=train_sampler, 
-                    num_workers=1)
-    valid_loader = torch.utils.data.DataLoader(mnist_valid, 
-                    batch_size=batch_size, sampler=valid_sampler, 
-                    num_workers=1)
-    test_loader = torch.utils.data.DataLoader(
-            mnist_test, batch_size=batch_size, shuffle=True, num_workers=1)
-
-    return train_loader, valid_loader, test_loader
+def load_dataset(file, config_type):
+    # check if the file exist on disk
+    if os.path.exists(file):
+        # make sure dataset is a pickled dataset 
+        if file.split(".")[-1] != "pkl":
+            print ("Can read only a pickled dataset")
+            sys.exit()
+        with open(file, 'rb') as f:
+            try:
+                mnist = pickle.load(f)
+                batch_size = get_configs(config_type)["batch_size"]
+                print("Loading {0} data set...\n".format(file))
+                train_data  = (mnist[0][0].reshape((50000/batch_size, batch_size, 784)),
+                              mnist[0][1].reshape((50000/batch_size, batch_size)))
+                valid_data  = (mnist[1][0].reshape((10000/batch_size, batch_size, 784)),
+                              mnist[1][1].reshape((10000/batch_size, batch_size)))
+                test_data   = (mnist[2][0].reshape((10000/batch_size, batch_size, 784)),
+                              mnist[2][1].reshape((10000/batch_size, batch_size)))
+            except : # whatever reader errors you care about
+                print ("Could not read {0}".format(file))
+                sys.exit()
+    else:
+        print ("File {0} not found".format(file))
+        sys.exit()
+    return train_data, valid_data, test_data
 
 def plot_sample_image(dataset, batch_size=9, plot_name="Title"):
     print "Plotting sample data"
@@ -61,17 +45,16 @@ def plot_sample_image(dataset, batch_size=9, plot_name="Title"):
     X = np.transpose(X, [0, 2, 3, 1])
     plot_images(X, labels, plot_name)
 
-def plot_sample_data(data, plot_name, type="accuracy"):
+def plot_sample_data(data, plot_name):
     print("Plotting sample data {0}".format(plot_name))
-    accuracy = data[1]
-    loss = data[0]
-    assert (len(accuracy)==len(loss))
-    x = range(0, len(loss))
-#    plt.scatter(m, n)
-    acc_plt  = plt.plot(x, accuracy, color='r', label='accuracy')
-    if type!="accuracy":
-        loss_plt = plt.plot(x, loss, color='g', label='loss')
-        plt.legend([acc_plt, loss_plt], ['accuracy Up', 'loss'])
+    num_records = np.size(np.shape(data))
+    for i in range(0, num_records):
+        accuracy = data[i][1]
+        loss = data[i][0]
+        label = data[i][2]
+        x = range(0, len(accuracy))
+        plt.plot(x, accuracy, label=label)
+    plt.legend(loc=4)
     plt.title(plot_name)
     plt.show()
 
@@ -94,3 +77,23 @@ def plot_images(images, labels, plot_name="Title"):
         ax.set_xticks([])
         ax.set_yticks([])
     plt.show()
+
+def get_configs(config_type=0):
+    if config_type==0:
+        return {'init_type': "zero", 'lr0': 0.01, 'batch_size': 100}
+    elif config_type==1:
+        return {'init_type': "normal", 'lr0': 0.01, 'batch_size': 100}
+    elif config_type==2:
+        return {'init_type': "glorot", 'lr0': 0.01, 'batch_size': 100}
+    else:
+        print ("Unsupported config type".format(config_type))
+        sys.exit()
+
+def get_config_info(config_type):
+    lr0 = get_configs(config_type)["lr0"]
+    init_type = get_configs(config_type)["init_type"]
+    batch_size = get_configs(config_type)["batch_size"]
+    config_str = "initializing weights with {0} distribution\ninitial learning rate is set to {1}\nbatch size is set to {2}\n".format(init_type, lr0, batch_size)
+    return "========================================================\nConfiguration:\n========================================================\n{0}".format(config_str)
+
+ 
