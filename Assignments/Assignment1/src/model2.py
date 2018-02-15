@@ -1,5 +1,3 @@
-import pickle as pk
-
 import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
@@ -24,19 +22,17 @@ class MLP(nn.Module):
         return output
 
 model = MLP()
-criterion = nn.NLLLoss()
+criterion = nn.CrossEntropyLoss()
 
 
 def train_model(train, test, lr0=0.05, batch_size=100):
-    train_loader, valid_loader, test_loader = load_dataset(train, test)
+    train_loader, valid_loader, test_loader = load_dataset(train, test, batch_size)
 
     optimizer = optim.SGD(model.parameters(), lr=lr0, momentum=momentum)
 
     for epoch in range(num_epochs):  # loop over the dataset multiple times
 
-        running_loss = 0.0
         for i, data in enumerate(train_loader, 0):
-            print(i)
             # get the inputs
             inputs, labels = data
 
@@ -52,12 +48,7 @@ def train_model(train, test, lr0=0.05, batch_size=100):
             loss.backward()
             optimizer.step()
 
-            # print statistics
-            running_loss += loss.data[0]
-            if i % 2000 == 1999:    # print every 2000 mini-batches
-                print('[%d, %5d] loss: %.3f' %
-                      (epoch + 1, i + 1, running_loss / 2000))
-                running_loss = 0.0
+        print("epoch:   {}, training loss:    {}, validation loss   ".format(epoch, loss.data[0]))
 
     print('Finished Training')
 
