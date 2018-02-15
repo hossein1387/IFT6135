@@ -6,8 +6,10 @@ import ipdb as pdb
 import pickle
 import os
 import sys
+import config
+import argparse
 
-def load_dataset(file, config_type):
+def load_dataset(file, config):
     # check if the file exist on disk
     if os.path.exists(file):
         # make sure dataset is a pickled dataset 
@@ -15,9 +17,8 @@ def load_dataset(file, config_type):
             print ("Can read only a pickled dataset")
             sys.exit()
         with open(file, 'rb') as f:
-            try:
                 mnist = pickle.load(f)
-                batch_size = get_configs(config_type)["batch_size"]
+                batch_size = config.batch_size
                 print("Loading {0} data set...\n".format(file))
                 train_data  = (mnist[0][0].reshape((50000/batch_size, batch_size, 784)),
                               mnist[0][1].reshape((50000/batch_size, batch_size)))
@@ -25,9 +26,6 @@ def load_dataset(file, config_type):
                               mnist[1][1].reshape((10000/batch_size, batch_size)))
                 test_data   = (mnist[2][0].reshape((10000/batch_size, batch_size, 784)),
                               mnist[2][1].reshape((10000/batch_size, batch_size)))
-            except : # whatever reader errors you care about
-                print ("Could not read {0}".format(file))
-                sys.exit()
     else:
         print ("File {0} not found".format(file))
         sys.exit()
@@ -45,9 +43,10 @@ def plot_sample_image(dataset, batch_size=9, plot_name="Title"):
     X = np.transpose(X, [0, 2, 3, 1])
     plot_images(X, labels, plot_name)
 
-def plot_sample_data(data, plot_name):
+def plot_sample_data(data, config, plot_name=None, save_image=False):
     print("Plotting sample data {0}".format(plot_name))
     num_records = np.size(np.shape(data))
+    fig, ax = plt.subplots()
     for i in range(0, num_records):
         accuracy = data[i][1]
         loss = data[i][0]
@@ -55,8 +54,22 @@ def plot_sample_data(data, plot_name):
         x = range(0, len(accuracy))
         plt.plot(x, accuracy, label=label)
     plt.legend(loc=4)
-    plt.title(plot_name)
-    plt.show()
+    if not save_image:
+        if plot_name is not None:
+            plt.title(plot_name)
+        plt.show()
+    else:
+        lr0 = config.lr0
+        init_type = config.init_type
+        batch_size = config.batch_size
+        num_epochs = config.num_epochs
+        config_str = "lr0={0} initialization={1} batch_size={2} num_epochs={3}".format(lr0, init_type, batch_size, num_epochs)
+        pdb.set_trace()
+        plt.rc('figure', titlesize=2)
+        ax.grid(linestyle='-', linewidth=1)
+        ax.grid(True)
+        plt.title(config_str)
+        plt.savefig('{0}.png'.format(config.filename))   # save the figure to file
 
 # plot only a batch of 9 images in a 3 by 3 plot
 def plot_images(images, labels, plot_name="Title"):
@@ -78,22 +91,10 @@ def plot_images(images, labels, plot_name="Title"):
         ax.set_yticks([])
     plt.show()
 
-def get_configs(config_type=0):
-    if config_type==0:
-        return {'init_type': "zero", 'lr0': 0.01, 'batch_size': 100}
-    elif config_type==1:
-        return {'init_type': "normal", 'lr0': 0.01, 'batch_size': 100}
-    elif config_type==2:
-        return {'init_type': "glorot", 'lr0': 0.01, 'batch_size': 100}
-    else:
-        print ("Unsupported config type".format(config_type))
-        sys.exit()
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--configfile', help='config file in yaml format', required=True)
+    parser.add_argument('-t', '--configtype', help='type of test to be done', required=True)
+    args = parser.parse_args()
+    return vars(args)
 
-def get_config_info(config_type):
-    lr0 = get_configs(config_type)["lr0"]
-    init_type = get_configs(config_type)["init_type"]
-    batch_size = get_configs(config_type)["batch_size"]
-    config_str = "initializing weights with {0} distribution\ninitial learning rate is set to {1}\nbatch size is set to {2}\n".format(init_type, lr0, batch_size)
-    return "========================================================\nConfiguration:\n========================================================\n{0}".format(config_str)
-
- 
