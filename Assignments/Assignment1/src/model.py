@@ -126,6 +126,7 @@ def train_model(model, config, criterion, optimizer):
     print("Validation Results:\nLoss : {0:.3f} Acc : {1:.3f}".format(valid_loss, valid_acc))
     data_to_plot = (records["train"], records["valid"])
     utility.plot_sample_data(data_to_plot, config, "train vs Valid accuracy", True)
+    utility.plot_sample_data(data_to_plot, config, "train vs Valid loss", True, True)
 
 
 if __name__ == '__main__':
