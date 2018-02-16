@@ -43,16 +43,21 @@ def plot_sample_image(dataset, batch_size=9, plot_name="Title"):
     X = np.transpose(X, [0, 2, 3, 1])
     plot_images(X, labels, plot_name)
 
-def plot_sample_data(data, config, plot_name=None, save_image=False):
+def plot_sample_data(data, config, plot_name=None, save_image=False, plot_loss=False, add_config_str=False):
     print("Plotting sample data {0}".format(plot_name))
+    filename = config.filename
     num_records = np.size(np.shape(data))
     fig, ax = plt.subplots()
     for i in range(0, num_records):
         accuracy = data[i][1]
         loss = data[i][0]
         label = data[i][2]
-        x = range(0, len(accuracy))
-        plt.plot(x, accuracy, label=label)
+        if plot_loss:
+            x = range(0, len(loss))
+            plt.plot(x, loss, label=label)
+        else:
+            x = range(0, len(accuracy))
+            plt.plot(x, accuracy, label=label)
     plt.legend(loc=4)
     if not save_image:
         if plot_name is not None:
@@ -64,12 +69,15 @@ def plot_sample_data(data, config, plot_name=None, save_image=False):
         batch_size = config.batch_size
         num_epochs = config.num_epochs
         config_str = "lr0={0} initialization={1} batch_size={2} num_epochs={3}".format(lr0, init_type, batch_size, num_epochs)
-        pdb.set_trace()
-        plt.rc('figure', titlesize=2)
         ax.grid(linestyle='-', linewidth=1)
         ax.grid(True)
-        plt.title(config_str)
-        plt.savefig('{0}.png'.format(config.filename))   # save the figure to file
+        if add_config_str:
+            plt.title(config_str)
+        if plot_loss:
+            filename = "{0}_loss".format(filename)
+        else:
+            filename = "{0}_accuracy".format(filename)
+        plt.savefig('{0}.png'.format(filename))   # save the figure to file
 
 # plot only a batch of 9 images in a 3 by 3 plot
 def plot_images(images, labels, plot_name="Title"):
