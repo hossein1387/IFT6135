@@ -28,5 +28,5 @@ if __name__ == '__main__':
         pass
     else:
         for i in range(0, len(args['runconfigs'])):
-            command = "python model.py -f config.yaml -t {0}".format(args['runconfigs'][0])
+            command = "python model.py -f config.yaml -t {0}".format(args['runconfigs'][i])
             os.system(command)
