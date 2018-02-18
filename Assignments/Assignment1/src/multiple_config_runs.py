@@ -24,7 +24,11 @@ def read_config_file(config_file):
 if __name__ == '__main__':
     args = parse_args()
     configs = read_config_file(args['configfile'])
+    if args['runconfigs'] is None:
+        print ("Please provide the test to run (ex: python multiple_config_runs.py -f config.yaml  -r Q1_1)")
+        sys.exit()
     if 'all' in args['runconfigs']:
+        print("not yet implemented")
         pass
     else:
         for i in range(0, len(args['runconfigs'])):
