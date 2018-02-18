@@ -1,7 +1,6 @@
 import torch
 import numpy as np
-import matplotlib
-import matplotlib.pyplot as plt
+import pylab 
 import ipdb as pdb
 import pickle
 import os
@@ -19,9 +18,18 @@ def load_dataset(file, config):
         with open(file, 'rb') as f:
                 mnist = pickle.load(f)
                 batch_size = config.batch_size
+                subsample_ratio = int(config.subsample_ratio * 50000)
+                data_indx = np.random.randint(0, 50000, (subsample_ratio,))
+                if config.subsample_ratio != 1:
+                    mnist_data = mnist[0][0][data_indx]
+                    mnist_label= mnist[0][1][data_indx]
+                else:
+                    mnist_data = mnist[0][0]
+                    mnist_label= mnist[0][1]
+
                 print("Loading {0} data set...\n".format(file))
-                train_data  = (mnist[0][0].reshape((50000/batch_size, batch_size, 784)),
-                              mnist[0][1].reshape((50000/batch_size, batch_size)))
+                train_data  = (mnist_data.reshape((subsample_ratio/batch_size, batch_size, 784)),
+                              mnist_label.reshape((subsample_ratio/batch_size, batch_size)))
                 valid_data  = (mnist[1][0].reshape((10000/batch_size, batch_size, 784)),
                               mnist[1][1].reshape((10000/batch_size, batch_size)))
                 test_data   = (mnist[2][0].reshape((10000/batch_size, batch_size, 784)),
@@ -31,73 +39,51 @@ def load_dataset(file, config):
         sys.exit()
     return train_data, valid_data, test_data
 
-def plot_sample_image(dataset, batch_size=9, plot_name="Title"):
-    print "Plotting sample data"
-    sample_loader = torch.utils.data.DataLoader(dataset, 
-                                                batch_size=9, 
-                                                shuffle=True, 
-                                                num_workers=1)
-    data_iter = iter(sample_loader)
-    images, labels = data_iter.next()
-    X = images.numpy()
-    X = np.transpose(X, [0, 2, 3, 1])
-    plot_images(X, labels, plot_name)
-
 def plot_sample_data(data, config, plot_name=None, save_image=False, plot_loss=False, add_config_str=False):
     print("Plotting sample data {0}".format(plot_name))
     filename = config.filename
     num_records = np.size(np.shape(data))
-    fig, ax = plt.subplots()
+    pdb.set_trace()
+
     for i in range(0, num_records):
-        accuracy = data[i][1]
-        loss = data[i][0]
-        label = data[i][2]
+        if num_records > 1:
+            loss      = data[i][0]
+            accuracy  = data[i][1]
+            plot_func = data[i][2]
+        else:
+            loss      = data[0]
+            accuracy  = data[1]
+            plot_func = data[2]
         if plot_loss:
             x = range(0, len(loss))
-            plt.plot(x, loss, label=label)
+            pylab.plot(x, loss, label='loss of{0}'.format(plot_func))
         else:
             x = range(0, len(accuracy))
-            plt.plot(x, accuracy, label=label)
-    plt.legend(loc=4)
+            pylab.plot(x, accuracy, label="accuracy of {0}".format(plot_func))
+    pylab.legend(loc='lower right')
     if not save_image:
         if plot_name is not None:
-            plt.title(plot_name)
-        plt.show()
+            pylab.title(plot_name)
+        pylab.show()
     else:
         lr0 = config.lr0
         init_type = config.init_type
         batch_size = config.batch_size
         num_epochs = config.num_epochs
         config_str = "lr0={0} initialization={1} batch_size={2} num_epochs={3}".format(lr0, init_type, batch_size, num_epochs)
-        ax.grid(linestyle='-', linewidth=1)
-        ax.grid(True)
+        pylab.grid(True, which="both", ls="-")
+        pylab.xlabel("Epoch")
         if add_config_str:
-            plt.title(config_str)
+            pylab.title(config_str)
         if plot_loss:
             filename = "{0}_loss".format(filename)
+            pylab.ylabel("Training Loss")
+            pylab.title(plot_name)
         else:
             filename = "{0}_accuracy".format(filename)
-        plt.savefig('{0}.png'.format(filename))   # save the figure to file
-
-# plot only a batch of 9 images in a 3 by 3 plot
-def plot_images(images, labels, plot_name="Title"):
-
-    assert len(images) == len(labels) == 9
-
-    # Create figure with sub-plots.
-    fig, axes = plt.subplots(3, 3)
-    if plot_name is not "Title":
-        plt.suptitle(plot_name)
-
-    for i, ax in enumerate(axes.flat):
-        # plot the image
-        ax.imshow(images[i, :, :, 0], cmap='gray')
-        xlabel = "Pred: {0}".format(labels[i])
-        
-        ax.set_xlabel(xlabel)
-        ax.set_xticks([])
-        ax.set_yticks([])
-    plt.show()
+            pylab.ylabel("Training Loss")
+            pylab.title(plot_name)
+        pylab.savefig('{0}.png'.format(filename))   # save the figure to file
 
 def parse_args():
     parser = argparse.ArgumentParser()
