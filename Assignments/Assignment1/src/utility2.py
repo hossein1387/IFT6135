@@ -35,7 +35,7 @@ def preprocess_dataset(procedure, train, test):
         tfidf_vectorizer = TfidfVectorizer(decode_error='replace')
         tfidf_x_train = tfidf_vectorizer.fit_transform(train.data)
         tfidf_x_test = tfidf_vectorizer.fit_transform(test.data)
-        return to_tensor(tfidf_x_train), to_tensor(tfidf_x_test)
+        return to_tensor(tfidf_x_train, train_y), to_tensor(tfidf_x_test, test_y)
 
     if procedure == 1 or procedure ==3:
         count_vectorizer = CountVectorizer(decode_error='replace')
@@ -47,7 +47,8 @@ def preprocess_dataset(procedure, train, test):
         else:
             normalized_x_train = scale(count_x_train)
             normalized_x_test = scale(count_x_test)
-            return to_tensor(normalized_x_train), to_tensor(normalized_x_test)  # implement epsilon = 1e-5
+            return to_tensor(normalized_x_train, train_y), to_tensor(normalized_x_test,
+                                                                     test_y)  # implement epsilon = 1e-5
 
 
 def to_tensor(sparse_matrix, labels):
