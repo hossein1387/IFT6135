@@ -1,3 +1,4 @@
+
 import ipdb as pdb
 import sys
 import yaml
@@ -33,7 +34,7 @@ class Configuration():
                      "number of epochs is set to: {3}\n"\
                      "number of neurons on L1: {4} \n"\
                      "number of neurons on L2: {5} \n"\
-                     "output file name: {6} \n"\
+                     "output file name prefix: {6} \n"\
                      "subsample ratio: {7} \n".\
                      format(self.init_type, self.lr0, self.batch_size, self.num_epochs, self.num_neorons_l1, self.num_neorons_l2, self.filename, self.subsample_ratio)
         return "========================================================\nConfiguration:\n========================================================\n{0}".format(config_str)

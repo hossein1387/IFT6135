@@ -2,53 +2,58 @@ Q1_1:
     init_type: 'zero'
     lr0: 0.01
     batch_size: 100
-    num_epochs: 10
+    num_epochs: 100
     num_neorons_l1: 600 
-    num_neorons_l2: 100 
+    num_neorons_l2: 200 
     filename: Q1_1
     subsample_ratio: 1
+    fig_caption: 'initializing weights with zero'
 Q1_2:
     init_type: 'normal'
     lr0: 0.01
     batch_size: 100
     num_epochs: 10
     num_neorons_l1: 600 
-    num_neorons_l2: 100 
+    num_neorons_l2: 200 
     filename: Q1_2
     subsample_ratio: 1
+    fig_caption: 'initializing weights with normal distribution N(0,1)'
 Q1_3:
     init_type: 'glorot'
     lr0: 0.01
     batch_size: 100
     num_epochs: 10
     num_neorons_l1: 600 
-    num_neorons_l2: 100 
+    num_neorons_l2: 200 
     filename: Q1_3
     subsample_ratio: 1
+    fig_caption: 'initializing weights using Glorot method'
 Q1_4:
     init_type: 'glorot'
     lr0: 0.01
     batch_size: 100
     num_epochs: 100
     num_neorons_l1: 600 
-    num_neorons_l2: 100 
+    num_neorons_l2: 200 
     filename: Q1_4
     subsample_ratio: 1
+    fig_caption: 'Accuracy of Validation and Training set'
 Q1_5:
     init_type: 'glorot'
     lr0: 0.01
     batch_size: 100
-    num_epochs: 10
+    num_epochs: 100
     num_neorons_l1: 1200 
-    num_neorons_l2: 200 
+    num_neorons_l2: 400 
     filename: Q1_5
     subsample_ratio: 1
+    fig_caption: 'Accuracy of Validation and Training set'
 Q1_6:
     init_type: 'glorot'
     lr0: 0.01
     batch_size: 100
-    num_epochs: 10
-    num_neorons_l1: 1200 
+    num_epochs: 100
+    num_neorons_l1: 600 
     num_neorons_l2: 200 
     filename: Q1_6
     subsample_ratio: 0.01
@@ -56,8 +61,8 @@ Q1_7:
     init_type: 'glorot'
     lr0: 0.01
     batch_size: 100
-    num_epochs: 10
-    num_neorons_l1: 1200 
+    num_epochs: 100
+    num_neorons_l1: 600 
     num_neorons_l2: 200 
     filename: Q1_7
     subsample_ratio: 0.02
@@ -65,8 +70,8 @@ Q1_8:
     init_type: 'glorot'
     lr0: 0.01
     batch_size: 100
-    num_epochs: 10
-    num_neorons_l1: 1200 
+    num_epochs: 100
+    num_neorons_l1: 600 
     num_neorons_l2: 200 
     filename: Q1_8
     subsample_ratio: 0.05
@@ -74,8 +79,8 @@ Q1_9:
     init_type: 'glorot'
     lr0: 0.01
     batch_size: 100
-    num_epochs: 10
-    num_neorons_l1: 1200 
+    num_epochs: 100
+    num_neorons_l1: 600 
     num_neorons_l2: 200 
     filename: Q1_9
     subsample_ratio: 0.1
@@ -83,8 +88,8 @@ Q1_10:
     init_type: 'glorot'
     lr0: 0.01
     batch_size: 100
-    num_epochs: 10
-    num_neorons_l1: 1200 
+    num_epochs: 100
+    num_neorons_l1: 600 
     num_neorons_l2: 200 
     filename: Q1_10
     subsample_ratio: 1.0

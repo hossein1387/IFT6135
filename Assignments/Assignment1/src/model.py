@@ -52,6 +52,7 @@ def build_model(config):
     model = MLP(config)
     model.apply(weights_init)
     criterion = nn.CrossEntropyLoss()
+#    optimizer = optim.Adam(model.parameters(), lr=config.lr0) --> gives much better result in fewer epochs
     optimizer = optim.SGD(model.parameters(), lr=config.lr0)
     return model, criterion, optimizer
 
@@ -101,6 +102,7 @@ def train_model(model, config, criterion, optimizer):
     train_data, valid_data, test_data = utility.load_dataset("mnist.pkl", config)
     record_performance(train_data, model, criterion, "train")
     record_performance(valid_data, model, criterion, "valid")
+    record_performance(test_data, model, criterion, "test")
     for epoch in range(config.num_epochs):
         # iterate over batches
         # the shape of train_data[0] must be 500 x 100 x 784
@@ -116,16 +118,26 @@ def train_model(model, config, criterion, optimizer):
             loss.backward()
             # take one SGD step
             optimizer.step()
-
         # record the performance for this epoch
         train_loss, train_acc = record_performance(train_data, model, criterion, "train")
         valid_loss, valid_acc = record_performance(valid_data, model, criterion, "valid")
+        test_loss, test_acc = record_performance(test_data, model, criterion, "test")
         # print the results for this epoch
-        print("Epoch {0} \nLoss : {1:.3f} \nAcc : {2:.3f}".format(epoch, train_loss, train_acc))
+        #print("Epoch {0} \nLoss : {1:.3f} \nAcc : {2:.3f}".format(epoch, train_loss, train_acc))
     # print the results for this epoch
-    print("Validation Results:\nLoss : {0:.3f} Acc : {1:.3f}".format(valid_loss, valid_acc))
-    data_to_plot = (records["train"], records["valid"])
-    utility.plot_sample_data(data_to_plot, config, "train vs Valid accuracy", True)
+    if int(config.filename.split("Q1_")[1]) < 6:
+        print("Validation Results:\nLoss : {0:.3f} Acc : {1:.3f}".format(valid_loss, valid_acc))
+        data_to_plot = (records["train"], records["valid"])
+    #    data_to_plot = (records["train"])
+        utility.plot_sample_data(data_to_plot, config, "Training Loss using {0} initialization".format(config.init_type), True)
+    #    utility.plot_sample_data(data_to_plot, config, "Training Loss using {0} initialization".format(config.init_type), True, True)
+    else:
+
+        max_indx = np.argmax(list(records["valid"][1]))
+        train_acc_data = list(records["train"][1])[max_indx]
+        test_acc_data = list(records["test"][1])[max_indx]
+        print("Best validation set was at epoch {0}".format(max_indx))
+        print("Generalization Gap : {0} - {1} = {2}".format(train_acc_data, test_acc_data, train_acc_data-test_acc_data))
 
 
 if __name__ == '__main__':
