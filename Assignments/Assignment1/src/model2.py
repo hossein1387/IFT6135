@@ -65,7 +65,7 @@ def train_model(train, test, procedure, lr0=0.05, batch_size=100):
 
         print("epoch:   {}, training accuracy:    {}, test accuracy   {}".format(epoch, train_accuracy, test_accuracy))
 
-    log_name = 'logfile_' + procedure + '_' + lr0 + '_' + batch_size + '.csv'
+    log_name = 'logfile_' + str(procedure) + '_' + str(lr0) + '_' + str(batch_size) + '.csv'
     with open(log_name, 'w') as f:
         wr = csv.writer(f, quoting=csv.QUOTE_ALL)
         wr.writerow(train_accuracys)
