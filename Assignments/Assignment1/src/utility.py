@@ -1,14 +1,13 @@
 import torch
 import numpy as np
-import pylab 
-import ipdb as pdb
+import matplotlib
+import matplotlib.pyplot as plt
+#import ipdb as pdb
 import pickle
 import os
 import sys
-import config
-import argparse
 
-def load_dataset(file, config):
+def load_dataset(file, config_type):
     # check if the file exist on disk
     if os.path.exists(file):
         # make sure dataset is a pickled dataset 
@@ -16,79 +15,87 @@ def load_dataset(file, config):
             print ("Can read only a pickled dataset")
             sys.exit()
         with open(file, 'rb') as f:
+            try:
                 mnist = pickle.load(f)
-                batch_size = config.batch_size
-                subsample_ratio = int(config.subsample_ratio * 50000)
-                data_indx = np.random.randint(0, 50000, (subsample_ratio,))
-                if config.subsample_ratio != 1:
-                    mnist_data = mnist[0][0][data_indx]
-                    mnist_label= mnist[0][1][data_indx]
-                else:
-                    mnist_data = mnist[0][0]
-                    mnist_label= mnist[0][1]
-
+                batch_size = get_configs(config_type)["batch_size"]
                 print("Loading {0} data set...\n".format(file))
-                train_data  = (mnist_data.reshape((subsample_ratio/batch_size, batch_size, 784)),
-                              mnist_label.reshape((subsample_ratio/batch_size, batch_size)))
+                train_data  = (mnist[0][0].reshape((50000/batch_size, batch_size, 784)),
+                              mnist[0][1].reshape((50000/batch_size, batch_size)))
                 valid_data  = (mnist[1][0].reshape((10000/batch_size, batch_size, 784)),
                               mnist[1][1].reshape((10000/batch_size, batch_size)))
                 test_data   = (mnist[2][0].reshape((10000/batch_size, batch_size, 784)),
                               mnist[2][1].reshape((10000/batch_size, batch_size)))
+            except : # whatever reader errors you care about
+                print ("Could not read {0}".format(file))
+                sys.exit()
     else:
         print ("File {0} not found".format(file))
         sys.exit()
     return train_data, valid_data, test_data
 
-def plot_sample_data(data, config, plot_name=None, save_image=False, plot_loss=False, add_config_str=False):
+def plot_sample_image(dataset, batch_size=9, plot_name="Title"):
+    print "Plotting sample data"
+    sample_loader = torch.utils.data.DataLoader(dataset, 
+                                                batch_size=9, 
+                                                shuffle=True, 
+                                                num_workers=1)
+    data_iter = iter(sample_loader)
+    images, labels = data_iter.next()
+    X = images.numpy()
+    X = np.transpose(X, [0, 2, 3, 1])
+    plot_images(X, labels, plot_name)
+
+def plot_sample_data(data, plot_name):
     print("Plotting sample data {0}".format(plot_name))
-    filename = config.filename
     num_records = np.size(np.shape(data))
-    pdb.set_trace()
-
     for i in range(0, num_records):
-        if num_records > 1:
-            loss      = data[i][0]
-            accuracy  = data[i][1]
-            plot_func = data[i][2]
-        else:
-            loss      = data[0]
-            accuracy  = data[1]
-            plot_func = data[2]
-        if plot_loss:
-            x = range(0, len(loss))
-            pylab.plot(x, loss, label='loss of{0}'.format(plot_func))
-        else:
-            x = range(0, len(accuracy))
-            pylab.plot(x, accuracy, label="accuracy of {0}".format(plot_func))
-    pylab.legend(loc='lower right')
-    if not save_image:
-        if plot_name is not None:
-            pylab.title(plot_name)
-        pylab.show()
+        accuracy = data[i][1]
+        loss = data[i][0]
+        label = data[i][2]
+        x = range(0, len(accuracy))
+        plt.plot(x, accuracy, label=label)
+    plt.legend(loc=4)
+    plt.title(plot_name)
+    plt.show()
+
+# plot only a batch of 9 images in a 3 by 3 plot
+def plot_images(images, labels, plot_name="Title"):
+
+    assert len(images) == len(labels) == 9
+
+    # Create figure with sub-plots.
+    fig, axes = plt.subplots(3, 3)
+    if plot_name is not "Title":
+        plt.suptitle(plot_name)
+
+    for i, ax in enumerate(axes.flat):
+        # plot the image
+        ax.imshow(images[i, :, :, 0], cmap='gray')
+        xlabel = "Pred: {0}".format(labels[i])
+        
+        ax.set_xlabel(xlabel)
+        ax.set_xticks([])
+        ax.set_yticks([])
+    plt.show()
+
+
+
+def get_configs(config_type=0):
+    if config_type==0:
+        return {'init_type': "zero", 'lr0': 0.01, 'batch_size': 100}
+    elif config_type==1:
+        return {'init_type': "normal", 'lr0': 0.01, 'batch_size': 100}
+    elif config_type==2:
+        return {'init_type': "glorot", 'lr0': 0.01, 'batch_size': 100}
     else:
-        lr0 = config.lr0
-        init_type = config.init_type
-        batch_size = config.batch_size
-        num_epochs = config.num_epochs
-        config_str = "lr0={0} initialization={1} batch_size={2} num_epochs={3}".format(lr0, init_type, batch_size, num_epochs)
-        pylab.grid(True, which="both", ls="-")
-        pylab.xlabel("Epoch")
-        if add_config_str:
-            pylab.title(config_str)
-        if plot_loss:
-            filename = "{0}_loss".format(filename)
-            pylab.ylabel("Training Loss")
-            pylab.title(plot_name)
-        else:
-            filename = "{0}_accuracy".format(filename)
-            pylab.ylabel("Training Loss")
-            pylab.title(plot_name)
-        pylab.savefig('{0}.png'.format(filename))   # save the figure to file
+        print ("Unsupported config type".format(config_type))
+        sys.exit()
 
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-f', '--configfile', help='config file in yaml format', required=True)
-    parser.add_argument('-t', '--configtype', help='type of test to be done', required=True)
-    args = parser.parse_args()
-    return vars(args)
+def get_config_info(config_type):
+    lr0 = get_configs(config_type)["lr0"]
+    init_type = get_configs(config_type)["init_type"]
+    batch_size = get_configs(config_type)["batch_size"]
+    config_str = "initializing weights with {0} distribution\ninitial learning rate is set to {1}\nbatch size is set to {2}\n".format(init_type, lr0, batch_size)
+    return "========================================================\nConfiguration:\n========================================================\n{0}".format(config_str)
 
+ 

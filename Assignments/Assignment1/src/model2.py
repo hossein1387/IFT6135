@@ -1,3 +1,5 @@
+import csv
+
 import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
@@ -25,10 +27,13 @@ model = MLP()
 criterion = nn.CrossEntropyLoss()
 
 
-def train_model(train, test, lr0=0.05, batch_size=100):
+def train_model(train, test, procedure, lr0=0.05, batch_size=100):
     train_loader, valid_loader, test_loader = load_dataset(train, test, batch_size)
 
     optimizer = optim.SGD(model.parameters(), lr=lr0, momentum=momentum)
+
+    train_accuracys = []
+    test_accuracys = []
 
     for epoch in range(num_epochs):  # loop over the dataset multiple times
         correct = 0
@@ -53,11 +58,18 @@ def train_model(train, test, lr0=0.05, batch_size=100):
             correct += (train_prediction.eq(labels.data).sum())
             total += labels.size(0)
         train_accuracy = correct / float(total) * 100
-
         test_accuracy = evaluate(test_loader)
 
-        print("epoch:   {}, training accuracy:    {}, validation accuracy   {}".format(epoch, train_accuracy,
-                                                                                       test_accuracy))
+        train_accuracys.append(train_accuracy)
+        test_accuracys.append(test_accuracys)
+
+        print("epoch:   {}, training accuracy:    {}, test accuracy   {}".format(epoch, train_accuracy, test_accuracy))
+
+    log_name = 'logfile_' + procedure + '_' + lr0 + '_' + batch_size + '.csv'
+    with open(log_name, 'w') as f:
+        wr = csv.writer(f, quoting=csv.QUOTE_ALL)
+        wr.writerow(train_accuracys)
+        wr.writerow(test_accuracys)
 
     print('Finished Training')
 
@@ -81,30 +93,16 @@ def main():
     raw_train = pk.load(open('data/raw_train', 'rb'))
     raw_test = pk.load(open('data/raw_test', 'rb'))
 
-    # for procedure in range(1, 3):
-    #     train, test = preprocess_dataset(procedure, raw_train, raw_test)
-    #     name_train = 'train_' + str(procedure)
-    #     name_test = 'test_' + str(procedure)
-    #     with open(name_train, 'wb') as f:
-    #         pk.dump(train, f)
-    #     with open(name_test, 'wb') as f:
-    #         pk.dump(test, f)
-
-    batch_size = 100
     for procedure in range(1,3):
         print("pre-process procedure {}: ".format(procedure))
-        # name_train = 'train_' + str(procedure)
-        # name_test = 'test_' + str(procedure)
-        # train = pk.load(open(name_train, 'rb'))
-        # test = pk.load(open(name_test, 'rb'))
         train, test = preprocess_dataset(procedure, raw_train, raw_test)
         for lr in [0.1, 0.05, 0.01]:
             print("results with learning rate: {}:".format(lr))
-            train_model(train, test, lr, batch_size)
+            train_model(train, test, procedure, lr, 100)
 
     print("results with batch size 1: ")
     train, test = preprocess_dataset(2, raw_train, raw_test)
-    train_model(train, test, 0.1, 1)
+    train_model(train, test, 1, 0.1, 1)
 
 
 if __name__== '__main__':
