@@ -3,7 +3,8 @@ import pickle as pk
 import numpy as np
 import torch
 import torch.utils.data as data_utils
-from sklearn import datasets
+from nltk.stem.snowball import SnowballStemmer
+from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import scale
@@ -20,25 +21,25 @@ from torch.utils.data.sampler import SubsetRandomSampler
 
 
 def read_20():
-    raw_train = datasets.load_files('data/20news-bydate-train')
-    raw_test = datasets.load_files('data/20news-bydate-test')
+    raw_train = fetch_20newsgroups()
+    raw_test = fetch_20newsgroups('test')
 
     pk.dump(raw_train, open('data/raw_train', 'wb'))
     pk.dump(raw_test, open('data/raw_test', 'wb'))
 
-
 def preprocess_dataset(procedure, train, test):
+
     train_y = train.target
     test_y = test.target
 
     if procedure == 2:
-        tfidf_vectorizer = TfidfVectorizer(decode_error='replace')
+        tfidf_vectorizer = TfidfVectorizer(decode_error='replace', analyzer=tf_stemmed_words, stop_words='english')
         tfidf_x_train = tfidf_vectorizer.fit_transform(train.data)
         tfidf_x_test = tfidf_vectorizer.fit_transform(test.data)
         return to_tensor(tfidf_x_train, train_y), to_tensor(tfidf_x_test, test_y)
 
     if procedure == 1 or procedure ==3:
-        count_vectorizer = CountVectorizer(decode_error='replace')
+        count_vectorizer = CountVectorizer(decode_error='replace', analyzer=cv_stemmed_words, stop_words='english')
         count_x_train = count_vectorizer.fit_transform(train.data)
         count_x_test = count_vectorizer.fit_transform(test.data)
 
@@ -49,6 +50,18 @@ def preprocess_dataset(procedure, train, test):
             normalized_x_test = scale(count_x_test)
             return to_tensor(normalized_x_train, train_y), to_tensor(normalized_x_test,
                                                                      test_y)  # implement epsilon = 1e-5
+
+
+def cv_stemmed_words(doc):
+    stemmer = SnowballStemmer('english', )
+    analyzer = CountVectorizer().build_analyzer()
+    return (stemmer.stem(w) for w in analyzer(doc))
+
+
+def tf_stemmed_words(doc):
+    stemmer = SnowballStemmer('english')
+    analyzer = TfidfVectorizer().build_analyzer()
+    return (stemmer.stem(w) for w in analyzer(doc))
 
 
 def to_tensor(sparse_matrix, labels):

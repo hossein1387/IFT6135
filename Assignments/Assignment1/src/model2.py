@@ -1,3 +1,4 @@
+import argparse
 import csv
 
 import torch.nn as nn
@@ -9,13 +10,14 @@ from Assignments.Assignment1.src.utility2 import *
 # Global Variables
 num_epochs = 20
 momentum = 0.9
+is_cuda = True
 
 
 class MLP(nn.Module):
     def __init__(self):
         super(MLP, self).__init__()
         self.model = nn.Sequential(
-            nn.Linear(130088, 100),
+            nn.Linear(111140, 100),
             nn.ReLU(),
             nn.Linear(100, 20))
 
@@ -24,6 +26,8 @@ class MLP(nn.Module):
         return output
 
 model = MLP()
+if is_cuda:
+    model.cuda()
 criterion = nn.CrossEntropyLoss()
 
 
@@ -41,6 +45,9 @@ def train_model(train, test, procedure, lr0=0.05, batch_size=100):
         for i, data in enumerate(train_loader, 0):
             # get the inputs
             inputs, labels = data
+
+            if is_cuda:
+                inputs, labels = inputs.cuda(), labels.cuda()
 
             # wrap them in Variable
             inputs, labels = Variable(inputs), Variable(labels)
@@ -80,6 +87,10 @@ def evaluate(test_loader):
     total = 0
     for data in test_loader:
         inputs, labels = data
+
+        if is_cuda:
+            inputs, labels = inputs.cuda(), labels.cuda()
+
         inputs, labels = Variable(inputs), labels
         outputs = model(inputs)
         _, predicted = torch.max(outputs.data, 1)
@@ -88,7 +99,14 @@ def evaluate(test_loader):
     return 100 * correct / total
 
 def main():
-    # read_20()
+    parser = argparse.ArgumentParser(description='Model 2')
+    parser.add_argument('--disable-cuda', action='store_true',
+                        help='Disable CUDA')
+    args = parser.parse_args()
+    args.cuda = not args.disable_cuda and torch.cuda.is_available()
+    is_cuda = args.cuda
+
+    read_20()
 
     raw_train = pk.load(open('data/raw_train', 'rb'))
     raw_test = pk.load(open('data/raw_test', 'rb'))
@@ -98,7 +116,7 @@ def main():
         train, test = preprocess_dataset(procedure, raw_train, raw_test)
         for lr in [0.1, 0.05, 0.01]:
             print("results with learning rate: {}:".format(lr))
-            train_model(train, test, procedure, lr, 100)
+            train_model(train, test, procedure, lr, 100, )
 
     print("results with batch size 1: ")
     train, test = preprocess_dataset(2, raw_train, raw_test)
