@@ -115,6 +115,8 @@ def main():
     print("results with batch size 1: ")
     train, test = preprocess_dataset(2, raw_train, raw_test)
     train_model(train, test, 1, 0.1, 1)
+    train_model(train, test, 1, 0.1, 100)
+
 
 if __name__== '__main__':
     main()
