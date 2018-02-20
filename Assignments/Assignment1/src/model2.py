@@ -7,7 +7,7 @@ from torch.autograd import Variable
 from Assignments.Assignment1.src.utility2 import *
 
 # Global Variables
-num_epochs = 20
+num_epochs = 1
 momentum = 0.9
 is_cuda = False
 
@@ -39,9 +39,13 @@ def train_model(train, test, procedure, lr0=0.05, batch_size=100):
     test_accuracys = []
 
     for epoch in range(num_epochs):  # loop over the dataset multiple times
-        correct = 0
-        total = 0
+
         for i, data in enumerate(train_loader, 0):
+
+            if i % 250 == 0:
+                correct = 0
+                total = 0
+
             # get the inputs
             inputs, labels = data
 
@@ -63,22 +67,17 @@ def train_model(train, test, procedure, lr0=0.05, batch_size=100):
             train_prediction = torch.max(outputs.data, 1)[1]
             correct += (train_prediction.eq(labels.data).sum())
             total += labels.size(0)
-        train_accuracy = correct / float(total) * 100
-        if batch_size != 1:
-            test_accuracy = evaluate(test_loader)
-        else:
-            test_accuracy = 0
 
-        train_accuracys.append(train_accuracy)
-        test_accuracys.append(test_accuracy)
+            if (i % 250 == 0):
+                train_accuracy = correct / float(total) * 100
+                train_accuracys.append(train_accuracy)
 
-        print("epoch:   {}, training accuracy:    {}, test accuracy   {}".format(epoch, train_accuracy, test_accuracy))
+                print("iteration:   {}, training accuracy:    {}".format(i, train_accuracy))
 
     log_name = 'logfile_' + str(procedure) + '_' + str(lr0) + '_' + str(batch_size) + '.csv'
     with open(log_name, 'w') as f:
         wr = csv.writer(f, quoting=csv.QUOTE_ALL)
         wr.writerow(train_accuracys)
-        wr.writerow(test_accuracys)
 
     print('Finished Training')
 
