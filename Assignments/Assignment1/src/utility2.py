@@ -46,8 +46,8 @@ def preprocess_dataset(procedure, train, test):
         if procedure == 1:
             return to_tensor(count_x_train, train_y), to_tensor(count_x_test, test_y)
         else:
-            normalized_x_train = scale(count_x_train)
-            normalized_x_test = scale(count_x_test)
+            normalized_x_train = scale(count_x_train, with_mean=False)
+            normalized_x_test = scale(count_x_test, with_mean=False)
             return to_tensor(normalized_x_train, train_y), to_tensor(normalized_x_test,
                                                                      test_y)  # implement epsilon = 1e-5
 
