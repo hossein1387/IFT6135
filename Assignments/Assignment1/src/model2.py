@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
 
-from Assignments.Assignment1.src.utility2 import *
+import utility2 
 
 # Global Variables
 num_epochs = 1
@@ -102,8 +102,8 @@ def evaluate(test_loader):
 def main():
     # read_20()
 
-    raw_train = pk.load(open('data/raw_train', 'rb'))
-    raw_test = pk.load(open('data/raw_test', 'rb'))
+    raw_train = utility2.pk.load(open('data/raw_train', 'rb'))
+    raw_test = utility2.pk.load(open('data/raw_test', 'rb'))
 
     # for procedure in range(1,3):
     #     print("pre-process procedure {}: ".format(procedure))
