@@ -5,6 +5,7 @@ Q1_1:
     batch_size: 64
     num_epochs: 100
     weight_decay: 0
+    batch_norm: False
     filename: Q1_1
     fig_caption: 'no regularization'
 Q1_2:
@@ -13,7 +14,8 @@ Q1_2:
     lr0: 0.02
     batch_size: 64
     num_epochs: 100
-    weight_decay = 2.5
+    weight_decay: 2.5
+    batch_norm: False
     filename: Q1_2
     fig_caption: 'l2 regularization'
 Q1_3:
@@ -22,7 +24,8 @@ Q1_3:
     lr0: 0.02
     batch_size: 64
     num_epochs: 100
-    weight_decay = 0
+    weight_decay: 0
+    batch_norm: False
     filename: Q1_3
     fig_caption: 'dropout, p=0.5'
 Q1_4:
@@ -31,7 +34,8 @@ Q1_4:
     lr0: 0.02
     batch_size: 64
     num_epochs: 100
-    weight_decay = 0
+    weight_decay: 0
+    batch_norm: False
     filename: Q1_4
     fig_caption: 'sample dropout mask, softmax and average'
 Q1_5:
@@ -40,7 +44,8 @@ Q1_5:
     lr0: 0.02
     batch_size: 64
     num_epochs: 100
-    weight_decay = 0
+    weight_decay: 0
+    batch_norm: False
     filename: Q1_5
     fig_caption: 'sample dropout mask, and average'
 Q1_6:
@@ -49,8 +54,8 @@ Q1_6:
     lr0: 1e-4
     batch_size: 128
     num_epochs: 10
-    weight_decay = 5e-4
-    batch_norm = True
+    weight_decay: 5e-4
+    batch_norm: True
     filename: Q1_6
     fig_caption: 'batch norm'
 Q1_6:
@@ -59,8 +64,8 @@ Q1_6:
     lr0: 1e-4
     batch_size: 128
     num_epochs: 10
-    weight_decay = 5e-4
-    batch_norm = True
+    weight_decay: 5e-4
+    batch_norm: False
     filename: Q1_6
     fig_caption: 'no batch norm'
    
