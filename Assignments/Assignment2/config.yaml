@@ -1,0 +1,71 @@
+Q1_1:
+    model_type: 'MLPa'
+    init_type: 'normal'
+    lr0: 0.02
+    batch_size: 64
+    num_epochs: 100
+    weight_decay: 0
+    batch_norm: false
+    filename: 'Q1_1'
+    fig_caption: 'no regularization'
+Q1_2:
+    model_type: 'MLPa'
+    init_type: 'normal'
+    lr0: 0.02
+    batch_size: 64
+    num_epochs: 100
+    weight_decay: 2.5
+    batch_norm: false
+    filename: 'Q1_2'
+    fig_caption: 'l2 regularization'
+Q1_3:
+    model_type: 'MLPb'
+    init_type: 'normal'
+    lr0: 0.02
+    batch_size: 64
+    num_epochs: 100
+    weight_decay: 0
+    batch_norm: false
+    filename: Q1_3
+    fig_caption: 'dropout, p=0.5'
+Q1_4:
+    model_type: 'MLPb'
+    init_type: 'normal'
+    lr0: 0.02
+    batch_size: 64
+    num_epochs: 100
+    weight_decay: 0
+    batch_norm: false
+    filename: 'Q1_4'
+    fig_caption: 'sample dropout mask, softmax and average'
+Q1_5:
+    model_type: 'MLPb'
+    init_type: 'normal'
+    lr0: 0.02
+    batch_size: 64
+    num_epochs: 100
+    weight_decay: 0
+    batch_norm: false
+    filename: 'Q1_5'
+    fig_caption: 'sample dropout mask, and average'
+Q1_6:
+    model_type: 'CNN'
+    init_type: 'normal'
+    lr0: 1e-4
+    batch_size: 128
+    num_epochs: 10
+    weight_decay: 5e-4
+    batch_norm: true
+    filename: 'Q1_6'
+    fig_caption: 'batch norm'
+Q1_6:
+    model_type: 'CNN'
+    init_type: 'normal'
+    lr0: 1e-4
+    batch_size: 128
+    num_epochs: 10
+    weight_decay: 5e-4
+    batch_norm: false
+    filename: 'Q1_6'
+    fig_caption: 'no batch norm'
+   
