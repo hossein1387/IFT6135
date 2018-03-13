@@ -1,25 +1,16 @@
-from __future__ import print_function
+import os
+import sys
 import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-import torch.backends.cudnn as cudnn
-import torchvision
 import torchvision.transforms as transforms
 import torch.utils.data.sampler as sampler
 import torchvision.datasets as datasets
-import os
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from PIL import Image
 import ipdb as pdb
-#from models import *
-from torch.autograd import Variable
-import sys
 import argparse
-import ipdb as pdb
-import config
 import yaml
+import config
 
 
 def parse_args():
@@ -42,16 +33,16 @@ def read_config_file(config_file):
 def load_dataset(config):
     image_size = config.image_size
     train_size = config.train_size
-    valid_size = config.valid_size
-    test_size = config.test_size
     batch_size_train = config.batch_size_train
+    valid_size = config.valid_size
     batch_size_valid = config.batch_size_valid
+    test_size = config.test_size
     batch_size_test = config.batch_size_test
-    indices = list(range(train_size+valid_size+test_size))
+    indxes = list(range(train_size+valid_size+test_size))
     np.random.seed(123)
-    np.random.shuffle(indices)
+    np.random.shuffle(indxes)
 
-    train_idx, valid_idx, test_idx = indices[:train_size], indices[train_size:(train_size+valid_size)], indices[(train_size+valid_size):]
+    train_idx, valid_idx, test_idx = indxes[:train_size], indxes[train_size:(train_size+valid_size)], indxes[(train_size+valid_size):]
 
     train_sampler = sampler.SubsetRandomSampler(train_idx)
     valid_sampler = sampler.SubsetRandomSampler(valid_idx)

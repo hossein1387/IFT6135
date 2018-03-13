@@ -34,7 +34,7 @@ class CNN(nn.Module):
         self.conv2 = nn.Conv2d(6, 16, 5)
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
         self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+        self.fc3 = nn.Linear(84, 2)
 
     def forward(self, x):
         x = self.pool(F.relu(self.conv1(x)))
@@ -94,23 +94,22 @@ def train_model(model, config, criterion, optimizer):
         running_loss = 0.0
         for i, data in enumerate(train_data, 0):
             # get the inputs
-            inputs, labels = data
-
+            x, labels = data
             # wrap them in Variable
-            inputs, labels = Variable(inputs), Variable(labels)
-
+            x, labels = Variable(x), Variable(labels)
             # zero the parameter gradients
             optimizer.zero_grad()
             pdb.set_trace()
             # forward + backward + optimize
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
+            y = model(x)
+            # compute loss
+            loss = criterion(y, labels)
+            # compute gradients and update parameters
             loss.backward()
             optimizer.step()
-
             # print statistics
             running_loss += loss.data[0]
-            if i % 2000 == 1999:    # print every 2000 mini-batches
+            if i % 2000 == 1999:
                 print('[%d, %5d] loss: %.3f' %
                       (epoch + 1, i + 1, running_loss / 2000))
                 running_loss = 0.0
