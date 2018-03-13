@@ -51,20 +51,20 @@ Q1_5:
 Q1_6:
     model_type: 'CNN'
     init_type: 'normal'
-    lr0: 1e-4
+    lr0: 0.0001
     batch_size: 128
     num_epochs: 10
-    weight_decay: 5e-4
+    weight_decay: 0.0005
     batch_norm: true
     filename: 'Q1_6'
     fig_caption: 'batch norm'
-Q1_6:
+Q1_7:
     model_type: 'CNN'
     init_type: 'normal'
-    lr0: 1e-4
+    lr0: 0.0001
     batch_size: 128
     num_epochs: 10
-    weight_decay: 5e-4
+    weight_decay: 0.0005
     batch_norm: false
     filename: 'Q1_6'
     fig_caption: 'no batch norm'
