@@ -68,4 +68,17 @@ Q1_6:
     batch_norm: false
     filename: 'Q1_6'
     fig_caption: 'no batch norm'
-   
+Q2:
+    num_epochs: 10
+    image_size: 64
+    train_size: 16000
+    valid_size: 4000
+    test_size: 4990
+    batch_size_train: 25
+    batch_size_valid: 50
+    batch_size_test: 1
+    lr0: 0.1
+    momentum: 0.9
+    data_set_path: 'datasets/PetImages'
+    model_sample_interval: 10
+
