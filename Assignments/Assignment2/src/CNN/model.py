@@ -19,11 +19,6 @@ records = {"train": [[], [], "train records"], "test": [[], [], "test records"],
 def weights_init(m):
     classname = m.__class__.__name__
     if classname.find("Conv2d") != -1 or classname.find("Linear") != -1: 
-        # pdb.set_trace()
-        # f_in  = np.shape(m.weight)[1]
-        # f_out = np.shape(m.weight)[0]
-        # glorot_init = np.sqrt(6.0/(f_out+f_in))
-        # m.weight.data.uniform_(-glorot_init, glorot_init)
         m.bias.data.fill_(0)
         nn.init.xavier_uniform(m.weight, gain=nn.init.calculate_gain('relu'))
 
@@ -31,18 +26,20 @@ def weights_init(m):
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
-        self.conv1 = nn.Conv2d(3, 32, 5)
-        self.conv2 = nn.Conv2d(32, 64, 5)
+        self.conv1 = nn.Conv2d(3, 64, 5)
+        self.conv2 = nn.Conv2d(64, 64, 5)
         self.conv3 = nn.Conv2d(64, 64, 5)
         self.pool = nn.MaxPool2d(2, 2)
+        self.bn32  = nn.BatchNorm2d(32)
+        self.bn64  = nn.BatchNorm2d(64)
         self.fc1 = nn.Linear(64 * 4 * 4, 256)
         self.fc2 = nn.Linear(256, 64)
         self.fc3 = nn.Linear(64, 1)
 
     def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = self.pool(F.relu(self.conv3(x)))
+        x = self.pool(F.relu(self.bn64(self.conv1(x))))
+        x = self.pool(F.relu(self.bn64(self.conv2(x))))
+        x = self.pool(F.relu(self.bn64(self.conv3(x))))
         x = x.view(-1, 64 * 4 * 4)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
