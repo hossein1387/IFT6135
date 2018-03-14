@@ -77,7 +77,7 @@ Q2:
     batch_size_train: 25
     batch_size_valid: 50
     batch_size_test: 1
-    lr0: 0.1
+    lr0: 0.001
     momentum: 0.9
     data_set_path: 'datasets/PetImages'
     model_sample_interval: 10
