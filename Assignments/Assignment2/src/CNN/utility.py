@@ -29,9 +29,16 @@ def read_config_file(config_file):
             sys.exit()
     return configs
 
+def show_sample_image_loader(data_loader):
+    img = iter(data_loader).next()
+    img = img[0][0]
+    img = img.numpy()
+    img = np.swapaxes(img, 0, 1)
+    img = np.swapaxes(img, 1, 2)
+    plt.imshow(img)
+    plt.show()
+
 def show_sample_image(img):
-    # img = iter(data_loader).next()
-    # img = img[0][i]
     img = img.numpy()
     img = np.swapaxes(img, 0, 1)
     img = np.swapaxes(img, 1, 2)
@@ -47,7 +54,6 @@ def load_dataset(config):
     test_size = config.test_size
     batch_size_test = config.batch_size_test
     indxes = list(range(train_size+valid_size+test_size))
-    np.random.seed(123)
     np.random.shuffle(indxes)
 
     train_idx, valid_idx, test_idx = indxes[:train_size], indxes[train_size:(train_size+valid_size)], indxes[(train_size+valid_size):]
@@ -60,24 +66,22 @@ def load_dataset(config):
         transforms.Resize((image_size, image_size), interpolation=Image.BILINEAR),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
-        # transforms.Normalize(mean=[0], std=[1])
         # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[
         #                         0.229, 0.224, 0.225])
     ])
     dataset = datasets.ImageFolder(root=config.data_set_path, transform=data_transform)
-
+    np.random.shuffle(dataset.imgs)
     train_data_loader = torch.utils.data.DataLoader(
         dataset, batch_size=batch_size_train, sampler=train_sampler, num_workers=10)
     # pdb.set_trace()
     # show_sample_image(train_data_loader)
+    test_data_loader = torch.utils.data.DataLoader(
+        dataset, batch_size=batch_size_test,  sampler=test_sampler, num_workers=10)
 
     valid_data_loader = torch.utils.data.DataLoader(
         dataset, batch_size=batch_size_valid,  sampler=valid_sampler, num_workers=10)
 
-    test_data_loader = torch.utils.data.DataLoader(
-        dataset, batch_size=batch_size_test,  sampler=test_sampler, num_workers=10)
 
-    print('Loaded images(train and valid), total',len(train_sampler)+len(valid_sampler))
-    print('Loaded test images, total',len(test_sampler))
-    print('Image size: ', dataset[0][0].size())
+    print('Total number of loaded images: {0}'.format(len(train_sampler)+len(test_sampler)+len(valid_sampler)))
+    print('Image size: {0}'.format(dataset[0][0].size()))
     return train_data_loader, valid_data_loader, test_data_loader
