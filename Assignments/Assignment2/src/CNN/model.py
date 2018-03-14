@@ -19,27 +19,31 @@ records = {"train": [[], [], "train records"], "test": [[], [], "test records"],
 def weights_init(m):
     classname = m.__class__.__name__
     if classname.find("Conv2d") != -1 or classname.find("Linear") != -1: 
-        f_in  = np.shape(m.weight)[1]
-        f_out = np.shape(m.weight)[0]
-        glorot_init = np.sqrt(6.0/(f_out+f_in))
-        m.weight.data.uniform_(-glorot_init, glorot_init)
+        # pdb.set_trace()
+        # f_in  = np.shape(m.weight)[1]
+        # f_out = np.shape(m.weight)[0]
+        # glorot_init = np.sqrt(6.0/(f_out+f_in))
+        # m.weight.data.uniform_(-glorot_init, glorot_init)
         m.bias.data.fill_(0)
+        nn.init.xavier_uniform(m.weight, gain=nn.init.calculate_gain('relu'))
 
 
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
+        self.conv1 = nn.Conv2d(3, 32, 5)
+        self.conv2 = nn.Conv2d(32, 64, 5)
+        self.conv3 = nn.Conv2d(64, 64, 5)
         self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 2)
+        self.fc1 = nn.Linear(64 * 4 * 4, 256)
+        self.fc2 = nn.Linear(256, 64)
+        self.fc3 = nn.Linear(64, 1)
 
     def forward(self, x):
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
-        x = x.view(-1, 16 * 5 * 5)
+        x = self.pool(F.relu(self.conv3(x)))
+        x = x.view(-1, 64 * 4 * 4)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
@@ -47,9 +51,10 @@ class CNN(nn.Module):
 
 def build_model(config):
     model = CNN()
-    model.apply(weights_init)
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(),  lr=config.lr0, momentum=config.momentum)
+    # model.apply(weights_init)
+    criterion = nn.BCEWithLogitsLoss()
+    # optimizer = optim.SGD(model.parameters(),  lr=config.lr0, momentum=config.momentum)
+    optimizer = optim.Adam(model.parameters(),  lr=0.001)
     return model, criterion, optimizer
 
 def evaluate(dataset_loader, model, criterion):
@@ -92,27 +97,30 @@ def train_model(model, config, criterion, optimizer):
     # iterate over batches
     for epoch in range(config.num_epochs): 
         running_loss = 0.0
+        data_ = iter(train_data).next()
         for i, data in enumerate(train_data, 0):
             # get the inputs
+            # data = data_
             x, labels = data
             # wrap them in Variable
             x, labels = Variable(x), Variable(labels)
             # zero the parameter gradients
             optimizer.zero_grad()
-            pdb.set_trace()
             # forward + backward + optimize
             y = model(x)
+            # pdb.set_trace()
             # compute loss
-            loss = criterion(y, labels)
+            loss = criterion(y.squeeze(), labels.float())
             # compute gradients and update parameters
             loss.backward()
             optimizer.step()
+            print loss.data.cpu().numpy()
             # print statistics
-            running_loss += loss.data[0]
-            if i % 2000 == 1999:
-                print('[%d, %5d] loss: %.3f' %
-                      (epoch + 1, i + 1, running_loss / 2000))
-                running_loss = 0.0
+            # running_loss += loss.data[0]
+            # if i % 2 == 0:
+            #     print('[%d, %5d] loss: %.3f' %
+            #           (epoch + 1, i + 1, running_loss / 2000))
+            #     running_loss = 0.0
 
 if __name__ == '__main__':
     args = utility.parse_args()
