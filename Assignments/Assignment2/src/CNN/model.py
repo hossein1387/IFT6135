@@ -55,36 +55,40 @@ def build_model(config):
     return model, criterion, optimizer
 
 def evaluate(dataset_loader, model, criterion):
-    for i in range(dataset_loader[0].shape[0]):
-        data   = torch.from_numpy(dataset_loader[0][i])
-        labels = torch.from_numpy(dataset_loader[1][i])
-        if not isinstance(data, Variable):
-           data = Variable(data).view(-1,784)
-           labels = Variable(labels).view(-1)
-        output = model(data)
-        loss = criterion(model(data), labels)
-        prediction = torch.max(output.data, 1)[1]
+    for i, data in enumerate(dataset_loader, 0):
+        # pdb.set_trace()
+        x, labels = data
+        x, labels = Variable(x), Variable(labels)
+        y = model(x)
+        loss = criterion(y.squeeze(), labels.float())
+        prediction = torch.max(y.data, 1)[1]
         accuracy = (prediction.eq(labels.data).sum() / float(labels.size(0))) * 100
     return loss.data[0], accuracy
 
-def record_performance(data, model, criterion, type="none"):
+def record_performance(data, model, criterion, type="none", print_res=False, epoch=0):
     # Record train accuracy
     if type is "train":
         train_loss, train_acc = evaluate(data, model, criterion)
         records["train"][0].append(train_loss)
         records["train"][1].append(train_acc)
+        if print_res:
+            print("[{0}] train accuracy={1:.3f} loss={2:.3f}".format(epoch, train_acc, train_loss))
         return train_loss, train_acc
     elif type is "test":
         # Record test accuracy
         test_loss, test_acc = evaluate(data, model, criterion)
         records["test"][0].append(test_loss)
         records["test"][1].append(test_acc)
+        if print_res:
+            print("[{0}] test accuracy={1:.3f} loss={2:.3f}".format(epoch, test_acc, test_loss))
         return test_loss, test_acc
     elif type is "valid":
         # Record valid accuracy
         valid_loss, valid_acc = evaluate(data, model, criterion)
         records["valid"][0].append(valid_loss)
         records["valid"][1].append(valid_acc)
+        if print_res:
+            print("[{0}] valid accuracy={1:.3f} loss={2:.3f}".format(epoch, valid_acc, valid_loss))
         return valid_loss, valid_acc
     else:
         raise ValueError("unknown data type was passed for performance recording")
@@ -92,9 +96,13 @@ def record_performance(data, model, criterion, type="none"):
 def train_model(model, config, criterion, optimizer):
     train_data, valid_data, test_data = utility.load_dataset(config)
     # iterate over batches
+    train_loss, train_acc = record_performance(train_data, model, criterion, "train", True, 0)
     for epoch in range(config.num_epochs): 
         running_loss = 0.0
-        data_ = iter(train_data).next()
+        iter_cnt = 0
+        # pdb.set_trace()
+        # valid_loss, valid_acc = record_performance(valid_data, model, criterion, "valid", True, epoch)
+        # test_loss, test_acc = record_performance(test_data, model, criterion, "test", True, epoch)
         for i, data in enumerate(train_data, 0):
             # get the inputs
             # data = data_
@@ -103,21 +111,20 @@ def train_model(model, config, criterion, optimizer):
             x, labels = Variable(x), Variable(labels)
             # zero the parameter gradients
             optimizer.zero_grad()
-            # forward + backward + optimize
+            # compute model output
             y = model(x)
             # pdb.set_trace()
             # compute loss
             loss = criterion(y.squeeze(), labels.float())
             # compute gradients and update parameters
             loss.backward()
+            # take one optimization step toward minimum
             optimizer.step()
-            print loss.data.cpu().numpy()
-            # print statistics
-            # running_loss += loss.data[0]
-            # if i % 2 == 0:
-            #     print('[%d, %5d] loss: %.3f' %
-            #           (epoch + 1, i + 1, running_loss / 2000))
-            #     running_loss = 0.0
+
+        train_loss, train_acc = record_performance(train_data, model, criterion, "train", True, epoch)
+        # valid_loss, valid_acc = record_performance(valid_data, model, criterion, "valid", True, epoch)
+        # test_loss, test_acc = record_performance(test_data, model, criterion, "test", True, epoch)
+
 
 if __name__ == '__main__':
     args = utility.parse_args()
