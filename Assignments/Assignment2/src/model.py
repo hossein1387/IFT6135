@@ -263,12 +263,6 @@ model, criterion, optimizer = build_model()
 train_model(model, criterion, optimizer)
 
 
-# In[ ]:
-
-
-
-
-# In[ ]:
 
 
 
