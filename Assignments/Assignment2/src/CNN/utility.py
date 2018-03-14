@@ -29,6 +29,14 @@ def read_config_file(config_file):
             sys.exit()
     return configs
 
+def show_sample_image(img):
+    # img = iter(data_loader).next()
+    # img = img[0][i]
+    img = img.numpy()
+    img = np.swapaxes(img, 0, 1)
+    img = np.swapaxes(img, 1, 2)
+    plt.imshow(img)
+    plt.show()
 
 def load_dataset(config):
     image_size = config.image_size
@@ -53,13 +61,15 @@ def load_dataset(config):
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         # transforms.Normalize(mean=[0], std=[1])
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[
-                                0.229, 0.224, 0.225])
+        # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[
+        #                         0.229, 0.224, 0.225])
     ])
     dataset = datasets.ImageFolder(root=config.data_set_path, transform=data_transform)
 
     train_data_loader = torch.utils.data.DataLoader(
         dataset, batch_size=batch_size_train, sampler=train_sampler, num_workers=10)
+    # pdb.set_trace()
+    # show_sample_image(train_data_loader)
 
     valid_data_loader = torch.utils.data.DataLoader(
         dataset, batch_size=batch_size_valid,  sampler=valid_sampler, num_workers=10)
