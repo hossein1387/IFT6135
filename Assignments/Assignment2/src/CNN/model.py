@@ -37,6 +37,7 @@ class CNN(nn.Module):
         self.fc3 = nn.Linear(64, 1)
 
     def forward(self, x):
+        pdb.set_trace()
         x = self.pool(F.relu(self.bn64(self.conv1(x))))
         x = self.pool(F.relu(self.bn64(self.conv2(x))))
         x = self.pool(F.relu(self.bn64(self.conv3(x))))
