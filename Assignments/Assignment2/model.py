@@ -3,7 +3,7 @@
 
 # # IFT 6135 A2
 
-# In[196]:
+# In[94]:
 
 import csv
 import torch.cuda
@@ -22,24 +22,24 @@ import numpy as np
 import pickle as pk
 
 
-# In[197]:
+# In[95]:
 
 cuda_available = torch.cuda.is_available()
 print(cuda_available)
 
 
-# In[198]:
+# In[96]:
 
 parent_dir = dirname(dirname(abspath('__file__')))
 yaml_file = join(parent_dir, 'config.yaml')
-config = config.Configuration('Q1_3', yaml_file)
+config = config.Configuration('Q1_1', yaml_file)
 
 print(config)
 
 
 # ## Load Data
 
-# In[199]:
+# In[97]:
 
 def load_dataset(config):
     mnist_train = datasets.MNIST(root='./data', train=True, transform=transforms.ToTensor(), download=True)
@@ -68,7 +68,7 @@ def test_valid_split(test, config):
 
 # ## Define model
 
-# In[200]:
+# In[98]:
 
 class MLPa(nn.Module):
     def __init__(self):
@@ -87,7 +87,7 @@ class MLPa(nn.Module):
         return output
 
 
-# In[201]:
+# In[99]:
 
 class MLPb(nn.Module):
     def __init__(self):
@@ -107,7 +107,7 @@ class MLPb(nn.Module):
     
 
 
-# In[202]:
+# In[100]:
 
 class CNNa(nn.Module):
     def __init__(self):
@@ -144,7 +144,7 @@ class CNNa(nn.Module):
         return self.clf(self.conv(x).squeeze())   
 
 
-# In[203]:
+# In[101]:
 
 class CNNb(nn.Module):
     def __init__(self):
@@ -185,7 +185,7 @@ class CNNb(nn.Module):
         return self.clf(self.conv(x).squeeze())   
 
 
-# In[204]:
+# In[102]:
 
 def build_model():
     if config.model_type == 'MLPa':
@@ -208,7 +208,7 @@ def build_model():
 
 # ## Train model
 
-# In[205]:
+# In[ ]:
 
 
 def train_model(config, model, criterion, optimizer):
@@ -241,10 +241,10 @@ def train_model(config, model, criterion, optimizer):
             losses.append(loss.data[0])
             if config.config_type == 'Q1_1' or config.config_type == 'Q1_2':
                 for param in model.parameters():
-                    parameter_norm.append(norm(param))
+                    parameter_norm.append(norm(param).data)
             parameter_norms.append(parameter_norm)
         # print the results for this epoch
-        test_loss = find_testloss(model, testloader)
+        test_loss = find_testloss(model, testloader) #change
         test_losses.append(test_loss)
         loss_at_epoch = np.mean(losses)
         train_losses.append(loss_at_epoch)
@@ -263,11 +263,33 @@ def train_model(config, model, criterion, optimizer):
     
 
 
-# In[206]:
+# In[104]:
+
+def evaluate(model, dataset_loader):
+    LOSSES = 0
+    COUNTER = 0
+    for batch in dataset_loader:
+        optimizer.zero_grad()
+
+        x, y = batch
+      
+        x = Variable(x, volatile=True).view(-1,1,28,28)
+        y = Variable(y).view(-1)
+
+        loss = criterion(model(x), y)
+        n = y.size(0)
+        LOSSES += loss.sum().data.cpu().numpy() * n
+        COUNTER += n
+    
+    return LOSSES / float(COUNTER)
+
+
+# In[105]:
 
 def find_testloss(model,test_loader):
     model.eval() 
     test_loss_iter = []
+    optimizer.zero_grad()
     for data in test_loader:
         inputs, targets = data
 
@@ -276,7 +298,7 @@ def find_testloss(model,test_loader):
             targets = Variable(targets, volatile=True).view(-1)
         elif config.model_type == 'CNN':
             inputs = Variable(inputs, volatile=True).view(-1,1,28,28)
-            targets = Variable(targets, volatile=True).view(-1)
+            targets = Variable(targets).view(-1)
         if cuda_available:
             inputs, targets = inputs.cuda(), targets.cuda()
 
@@ -287,28 +309,28 @@ def find_testloss(model,test_loader):
     return iteration_test_loss.data[0]
 
 
-# In[207]:
+# In[125]:
 
 def dropout_validate(model, N, validloader):
     model.eval()
-    mask_probs = np.ones(600)*0.5
+    mask_probs = np.ones(200)*0.5
     bern = Bernoulli(torch.from_numpy(mask_probs))
     
     correct = 0
     total = 0
-    
     for x, y in validloader:
         
         x = Variable(x, volatile=True).view(-1,784)
         y = Variable(y, volatile=True).view(-1)
         
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
+        x = F.relu(model.fc1(x))
+        x = F.relu(model.fc2(x))
+        sum_out = 0
         for i in range(N):
             dropout_mask = bern.sample()
-            sum_out += F.relu(x*dropout_mask)
+            sum_out += F.relu(x*Variable(dropout_mask))
         x = sum_out / N        
-        outputs = F.Softmax(self.fc3(x)) 
+        outputs = F.Softmax(model.fc3(x)) 
         
         _, predicted = torch.max(outputs.data, 1)
         total += y.size(0)
@@ -317,10 +339,21 @@ def dropout_validate(model, N, validloader):
     return correct/total
 
 
-# In[208]:
+# In[113]:
 
 model, criterion, optimizer = build_model()
 train_model(config, model, criterion, optimizer)
+
+
+# In[116]:
+
+#torch.save(model.state_dict(), join(parent_dir, 'MLP'))
+
+
+
+# In[126]:
+
+trainloader, testloader, validloader = load_dataset(config)
 
 if config.config_type == 'Q1_4' or config.config_type == 'Q1_5':
     dropout_validates = []
@@ -340,9 +373,4 @@ def parse_args():
     parser.add_argument('-r', '--configtype', help='configurations to run', required=True)
     args = parser.parse_args()
     return vars(args)
-
-
-# In[ ]:
-
-
 
