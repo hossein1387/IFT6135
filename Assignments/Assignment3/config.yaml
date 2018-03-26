@@ -1,0 +1,13 @@
+LSTM:
+    model_type: 'LSTM'
+    lr0: 0.02
+    batch_size: 50
+    num_epochs: 100
+    momentum: 0.9
+    filename: 'Q1_1'
+    intrval: 100
+    seq_len_min: 1
+    seq_len_max: 20
+    num_hidden: 100
+    num_batches: 1000
+    fig_caption: 'no regularization'
