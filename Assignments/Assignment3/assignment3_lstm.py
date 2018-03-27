@@ -1,35 +1,16 @@
-import random
-import time
-import numpy as np
-import matplotlib.pyplot as plt
-
 import os
 import os.path
 import time
-import sys
 
-import torch
-import torch.nn.functional as F
-import torch.optim as optim
-import torchvision.models as models
-import torch.backends.cudnn as cudnn
-import torch.nn as nn
-import torch.nn.parallel
-import torch.optim as optim
-import torch.utils.data as data
-import torchvision.datasets as datasets
-import torchvision.models as models
-import torch.utils.data.sampler as sampler
-import torchvision.transforms as transforms
-from torch.autograd import Variable
-import torch.autograd as autograd
-import torch.distributions as distributions
-
-import ipdb as pdb
-
-import utility
 import config
 import models
+import numpy as np
+import torch
+import torch.nn.functional as F
+import torch.nn.parallel
+import utility
+
+# import matplotlib.pyplot as plt
 
 # Global Variables
 # Records the model's performance
@@ -39,6 +20,8 @@ def get_ms():
     """Returns the current time in miliseconds."""
     return time.time() * 1000
 
+
+'''
 def gen1seq():
     length=np.random.randint(2,SEQUENCE_MAX_LEN+1)
     # length=SEQ_SIZE+1
@@ -47,7 +30,7 @@ def gen1seq():
     seq[-1]=0.0
     seq[-1,-1,-1]=1.0
     return seq
-
+'''
 def gen1seq_act(length):
     seq=torch.zeros(9*length).view(length, 1, -1)+0.5
     seq[:,:,-1]=0.0
@@ -60,7 +43,7 @@ def train_lstm_model(config, model, criterion, optimizer, seqs_loader):
     
     start_ms = get_ms()
 
-    list_losses =[]
+    list_losses = []
     list_costs =[]
     list_seq_num=[]
     losses=0
@@ -96,6 +79,8 @@ def train_lstm_model(config, model, criterion, optimizer, seqs_loader):
 
     return list_losses,list_costs,list_seq_num
 
+
+'''
 def train_ntm_model(config, model, criterion, optimizer, train_data_loader) : 
     list_seq_num = []
     list_loss = []
@@ -135,7 +120,7 @@ def train_ntm_model(config, model, criterion, optimizer, train_data_loader) :
             losses = 0
             
     return list_seq_num, list_loss, list_cost
-
+'''
 
 def evaluate(model,criterion,optimizer, test_data_loader) : 
     costs = 0
@@ -159,16 +144,28 @@ def evaluate(model,criterion,optimizer, test_data_loader) :
     print ("T = %d, Average loss %f, average cost %f" % (Y.size(0), losses.data[0]/lengthes, costs/lengthes))
     return losses.data/lengthes, costs/lengthes
 
+
+def test_sequences():
+    seqs = list(range(10, 110, 10))
+
+    for seq in seqs:
+        seqs_loader = utility.load_dataset(config, seq)
+        losses, _, _ = train_lstm_model(config, model, criterion, optimizer, seqs_loader)
+        losses = np.array(losses)
+        fname = config['model_type'] + '_losses_' + str(seq)
+        fname = os.path.join('logs', fname)
+        np.savetxt(fname, losses)
+
 if __name__ == '__main__':
-    pdb.set_trace()
+    # pdb.set_trace()
     args = utility.parse_args()
     config_type = args['configtype']
     config_file = args['configfile']
     config = config.Configuration(config_type, config_file).config
     model, criterion, optimizer = models.build_model(config)
     seqs_loader = utility.load_dataset(config)
-    if config['model_type'] == "LSTM":
-        train_lstm_model(config, model, criterion, optimizer, seqs_loader)
-    else:
-        train_ntm_model(config, model, criterion, optimizer, seqs_loader)
+    if config['model_type'] == 'LSTM':
+        test_sequences()
 
+    # else:
+    #  train_ntm_model(config, model, criterion, optimizer, seqs_loader)

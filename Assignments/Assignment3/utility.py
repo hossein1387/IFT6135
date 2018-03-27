@@ -1,31 +1,14 @@
+import argparse
 import os
-import sys
 import random
-
-import torch
-import torch.nn.functional as F
-import torch.optim as optim
-import torchvision.models as models
-import torch.backends.cudnn as cudnn
-import torch.nn as nn
-import torch.nn.parallel
-import torch.optim as optim
-import torch.utils.data as data
-import torchvision.datasets as datasets
-import torchvision.models as models
-import torch.utils.data.sampler as sampler
-import torchvision.transforms as transforms
-from torch.autograd import Variable
-import torch.autograd as autograd
-import torch.distributions as distributions
+import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
-from PIL import Image
-import ipdb as pdb
-import argparse
+import torch
+import torch.nn.parallel
 import yaml
-import config
+from torch.autograd import Variable
 
 
 def parse_args():
@@ -84,3 +67,33 @@ def load_dataset(config):
             outp = seq.clone()
             yield batch_num+1, inp.float(), outp.float()
 
+
+def make_plots(seqs):
+    for seq in seqs:
+        plot()
+
+
+def plot(seq_length):
+    lstm_fname = 'lstm_losses_' + str(seq_length)
+    lstm_fname = os.path.join('logs', lstm_fname)
+    lstm_losses = np.loadtxt(lstm_fname)
+
+    ntm_fname = 'ntm_losses_' + str(seq_length)
+    ntm_fname = os.path.join('logs', ntm_fname)
+    ntm_losses = np.loadtxt(ntm_fname)
+
+    x = len(lstm_losses)  # TODO: to change x to batch number (or whatever)
+
+    plt.plot(x, lstm_losses)
+    plt.plot(x, ntm_losses)
+
+    plt.title('Graph of losses with sequence length of ' + str(seq_length))
+    plt.xlabel('batch number')  # TODO: to change
+    plt.ylabel('loss')
+    plt.legend('lstm', 'ntm')
+
+    plot_fname = 'losses_' + str(seq_length) + '.png'
+    plot_fname = os.path.join('plots', plot_fname)
+    plt.savefig(plot_fname, bbox_inches='tight')
+
+    plt.clf()
