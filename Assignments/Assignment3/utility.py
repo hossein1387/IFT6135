@@ -1,9 +1,24 @@
 import os
 import sys
+import random
+
 import torch
-import torchvision.transforms as transforms
-import torch.utils.data.sampler as sampler
+import torch.nn.functional as F
+import torch.optim as optim
+import torchvision.models as models
+import torch.backends.cudnn as cudnn
+import torch.nn as nn
+import torch.nn.parallel
+import torch.optim as optim
+import torch.utils.data as data
 import torchvision.datasets as datasets
+import torchvision.models as models
+import torch.utils.data.sampler as sampler
+import torchvision.transforms as transforms
+from torch.autograd import Variable
+import torch.autograd as autograd
+import torch.distributions as distributions
+
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
@@ -29,25 +44,43 @@ def read_config_file(config_file):
             sys.exit()
     return configs
 
+def clip_grads(net):
+    """Gradient clipping to the range [10, 10]."""
+    parameters = list(filter(lambda p: p.grad is not None, net.parameters()))
+    for p in parameters:
+        p.grad.data.clamp_(-10, 10)
+
 def load_dataset(config):
     batch_size = config['batch_size']
-    for batch_num in range(config['num_batches']):
-        seq_len = random.randint(config['seq_len_min'], config['seq_len_max'])
-        seq = np.random.binomial(1, 0.5, (seq_len, batch_size, 8))
-        seq = Variable(torch.from_numpy(seq))
+    if config['model_type'] == "LSTM":
+        for batch_num in range(config['num_batches']):
+            seq_len = random.randint(config['seq_len_min'], config['seq_len_max'])
+            seq = np.random.binomial(1, 0.5, (seq_len, batch_size, 8))
+            seq = Variable(torch.from_numpy(seq))
 
-        # The input includes an additional channel used for the delimiter
-        inp = Variable(torch.zeros(seq_len + 1, batch_size, seq_width + 1))
-        inp[:seq_len, :, :seq_width] = seq
-        inp[seq_len, :, seq_width] = 1.0 # delimiter in our control channel
-        outp = seq.clone()
+            # The input includes an additional channel used for the delimiter
+            inp = Variable(torch.zeros(seq_len + 1, batch_size, config['data_width'] + 1))
+            inp[:seq_len, :, :config['data_width']] = seq
+            inp[seq_len, :, config['data_width']] = 1.0 # delimiter in our control channel
+            outp = seq.clone()
 
-        seq2 = Variable(torch.zeros(seq_len, batch_size, seq_width)+0.5)
-        act_inp = Variable(torch.zeros(seq_len, batch_size, seq_width + 1))
-        act_inp[:seq_len, :, :seq_width] = seq2
+            seq2 = Variable(torch.zeros(seq_len, batch_size, config['data_width'])+0.5)
+            act_inp = Variable(torch.zeros(seq_len, batch_size, config['data_width'] + 1))
+            act_inp[:seq_len, :, :config['data_width']] = seq2
 
-        yield batch_num+1, inp.float(), outp.float(), act_inp.float()
+            yield batch_num+1, inp.float(), outp.float(), act_inp.float()
+    else:
+        for batch_num in range(config['num_batches']):
 
-    print('Total number of loaded images: {0}'.format(len(train_sampler)+len(test_sampler)+len(valid_sampler)))
-    print('Image size: {0}'.format(dataset[0][0].size()))
-    return train_data_loader, valid_data_loader, test_data_loader
+            # All batches have the same sequence length
+            seq_len = random.randint(config['seq_len_min'], config['seq_len_max'])
+            seq = np.random.binomial(1, 0.5, (seq_len, batch_size, config['data_width']))
+            seq = Variable(torch.from_numpy(seq))
+
+            # The input includes an additional channel used for the delimiter
+            inp = Variable(torch.zeros(seq_len + 1, batch_size, config['data_width'] + 1))
+            inp[:seq_len, :, :config['data_width']] = seq
+            inp[seq_len, :, config['data_width']] = 1.0 # delimiter in our control channel
+            outp = seq.clone()
+            yield batch_num+1, inp.float(), outp.float()
+

@@ -26,7 +26,7 @@ class Configuration():
                      "momentum is set to: {3} \n"\
                      "total number of batches: {4}\n"\
                      "number of hidden units: {5}\n".\
-                     format(self.config['model_type'], self.config['lr0'], self.config['num_epochs'], self.config['momentum'],\
+                     format(self.config['model_type'], self.config['learning_rate'], self.config['num_epochs'], self.config['momentum'],\
                             self.config['num_batches'], self.config['num_hidden'])
         return "========================================================\nConfiguration:\n========================================================\n{0}".format(config_str)
 
