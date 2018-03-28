@@ -48,7 +48,7 @@ def train_lstm_model(config, model, criterion, optimizer, seqs_loader):
     list_seq_num=[]
     losses=0
     costs=0
-    lengthes=0
+    lengths = 0
 
     for batch_num, X, Y, act in seqs_loader:
         model.init_hidden(config['batch_size'])
@@ -65,11 +65,11 @@ def train_lstm_model(config, model, criterion, optimizer, seqs_loader):
         cost = np.sum(np.abs(out_binarized - Y.data.numpy()))
         losses+=loss
         costs+=cost
-        lengthes+=config['batch_size']
+        lengths += config['batch_size']
         if (batch_num) % config['interval']==0 :
             list_costs.append(costs/config['interval']/config['batch_size']) #per sequence
             list_losses.append(losses.data[0]/config['interval']/config['batch_size'])
-            list_seq_num.append(lengthes) # per thousand
+            list_seq_num.append(lengths)  # per thousand
             mean_time = ((get_ms() - start_ms) / config['interval']) / config['batch_size']
             print ("Batch %d th, loss %f, cost %f, Time %.3f ms/sequence." % (batch_num, list_losses[-1], list_costs[-1], mean_time) )
             
@@ -125,7 +125,7 @@ def train_ntm_model(config, model, criterion, optimizer, train_data_loader) :
 def evaluate(model,criterion,optimizer, test_data_loader) : 
     costs = 0
     losses = 0
-    lengthes = 0
+    lengths = 0
     for batch_num, X, Y, act in test_data_loader:
         model.init_hidden(config['batch_size'])
         optimizer.zero_grad()
@@ -135,26 +135,29 @@ def evaluate(model,criterion,optimizer, test_data_loader) :
         loss = criterion(sigmoid_out, Y)
         loss.backward()
         optimizer.step()
-        lengthes+=config['batch_size']
+        lengths += 20
         losses += loss
         out_binarized = sigmoid_out.clone().data.numpy()
         out_binarized=np.where(out_binarized>0.5,1,0)
         cost = np.sum(np.abs(out_binarized - Y.data.numpy()))
         costs += cost
-    print ("T = %d, Average loss %f, average cost %f" % (Y.size(0), losses.data[0]/lengthes, costs/lengthes))
-    return losses.data/lengthes, costs/lengthes
+    print("T = %d, Average loss %f, average cost %f" % (
+    Y.size(0), losses.data[0] / lengths, costs / lengths))  # TODO: Check loss averaging
+    return losses.data / lengths, costs / lengths
 
 
-def test_sequences():
-    seqs = list(range(10, 110, 10))
+def test_sequences(config, model, criterion, optimizer):
+    seq_lengths = list(range(10, 110, 10))
+    losses = []
+    for seq_length in seq_lengths:
+        test_seqs_loader = utility.load_dataset(config, test=True, T=seq_length)
+        loss, _ = evaluate(model, criterion, optimizer, test_seqs_loader)
+        losses.append(loss)
 
-    for seq in seqs:
-        seqs_loader = utility.load_dataset(config, seq)
-        losses, _, _ = train_lstm_model(config, model, criterion, optimizer, seqs_loader)
-        losses = np.array(losses)
-        fname = config['model_type'] + '_losses_' + str(seq)
-        fname = os.path.join('logs', fname)
-        np.savetxt(fname, losses)
+    losses = np.array(losses)
+    fname = config['model_type'] + '_test_losses.np'
+    fname = os.path.join('logs', fname)
+    np.savetxt(fname, losses)
 
 if __name__ == '__main__':
     # pdb.set_trace()
@@ -163,9 +166,7 @@ if __name__ == '__main__':
     config_file = args['configfile']
     config = config.Configuration(config_type, config_file).config
     model, criterion, optimizer = models.build_model(config)
-    seqs_loader = utility.load_dataset(config)
-    if config['model_type'] == 'LSTM':
-        test_sequences()
+    train_seqs_loader = utility.load_dataset(config)
+    train_lstm_model(config, model, criterion, optimizer, train_seqs_loader)
 
-    # else:
-    #  train_ntm_model(config, model, criterion, optimizer, seqs_loader)
+    test_sequences(config, model, criterion, optimizer)

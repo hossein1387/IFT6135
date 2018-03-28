@@ -5,6 +5,7 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 import torch
 import torch.nn.parallel
 import yaml
@@ -33,11 +34,18 @@ def clip_grads(net):
     for p in parameters:
         p.grad.data.clamp_(-10, 10)
 
-def load_dataset(config):
+
+def load_dataset(config, test=False, T=None):
     batch_size = config['batch_size']
+    if test:
+        num_batches = 20
+        seq_len = T
+    else:
+        num_batches = config['num_batches']
     if config['model_type'] == "LSTM":
-        for batch_num in range(config['num_batches']):
-            seq_len = random.randint(config['seq_len_min'], config['seq_len_max'])
+        for batch_num in range(num_batches):
+            if not test:
+                seq_len = random.randint(config['seq_len_min'], config['seq_len_max'])
             seq = np.random.binomial(1, 0.5, (seq_len, batch_size, 8))
             seq = Variable(torch.from_numpy(seq))
 
@@ -68,32 +76,31 @@ def load_dataset(config):
             yield batch_num+1, inp.float(), outp.float()
 
 
-def make_plots(seqs):
-    for seq in seqs:
-        plot()
-
-
-def plot(seq_length):
-    lstm_fname = 'lstm_losses_' + str(seq_length)
+def plot():
+    sns.set()
+    lstm_fname = 'LSTM_test_losses.np'
     lstm_fname = os.path.join('logs', lstm_fname)
     lstm_losses = np.loadtxt(lstm_fname)
 
-    ntm_fname = 'ntm_losses_' + str(seq_length)
+    ntm_fname = 'NTM_test_losses.np'
     ntm_fname = os.path.join('logs', ntm_fname)
     ntm_losses = np.loadtxt(ntm_fname)
 
-    x = len(lstm_losses)  # TODO: to change x to batch number (or whatever)
+    x = list(range(10, 110, 10))
 
-    plt.plot(x, lstm_losses)
-    plt.plot(x, ntm_losses)
+    plt.plot(x, lstm_losses, label='lstm')
+    plt.plot(x, ntm_losses, label='ntm')
 
-    plt.title('Graph of losses with sequence length of ' + str(seq_length))
-    plt.xlabel('batch number')  # TODO: to change
+    plt.title('Graph of losses with varying sequence lengths')
+    plt.xlabel('sequence length')
     plt.ylabel('loss')
-    plt.legend('lstm', 'ntm')
+    plt.legend()
 
-    plot_fname = 'losses_' + str(seq_length) + '.png'
+    plot_fname = 'test_losses.png'
     plot_fname = os.path.join('plots', plot_fname)
     plt.savefig(plot_fname, bbox_inches='tight')
 
     plt.clf()
+
+
+plot()
