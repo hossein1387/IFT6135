@@ -44,7 +44,7 @@ def clip_grads(net):
     parameters = list(filter(lambda p: p.grad is not None, net.parameters()))
     for p in parameters:
         p.grad.data.clamp_(-10, 10)
-        
+
 def gen1seq():
     length=np.random.randint(2,SEQUENCE_MAX_LEN+1)
     # length=SEQ_SIZE+1
@@ -102,6 +102,30 @@ def train_lstm_model(config, model, criterion, optimizer, seqs_loader):
 
     return list_losses,list_costs,list_seq_num
 
+
+
+def saveCheckpoint(model,list_batch_num,list_loss, list_cost, path='lstm') :
+    print('Saving..')
+    state = {
+        'model': model,
+        'list_batch_num': list_batch_num,
+        'list_loss' : list_loss,
+        'list_cost' : list_cost
+    }
+    if not os.path.isdir('checkpoint'):
+        os.mkdir('checkpoint')
+    torch.save(state, './checkpoint/'+path)
+
+def loadCheckpoint(path='lstm'):
+    print('==> Resuming from checkpoint..')
+    assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
+    checkpoint = torch.load('./checkpoint/'+path)
+    model = checkpoint['model']
+    list_batch_num = checkpoint['list_batch_num']
+    list_loss = checkpoint['list_loss']
+    list_cost = checkpoint['list_cost']
+    return model, list_batch_num, list_loss, list_cost
+
 def train_ntm_model(config, model, criterion, optimizer, train_data_loader) : 
     list_seq_num = []
     list_loss = []
@@ -109,6 +133,7 @@ def train_ntm_model(config, model, criterion, optimizer, train_data_loader) :
     lengthes = 0
     losses = 0
     costs = 0
+    cnt = 0
     for batch_num, X, Y  in train_data_loader:
         # pdb.set_trace()
         inp_seq_len, _, _ = X.size()
@@ -131,6 +156,8 @@ def train_ntm_model(config, model, criterion, optimizer, train_data_loader) :
         loss.backward()
         clip_grads(model)
         optimizer.step()
+        cnt += 1
+        print("data counter={0}".format(cnt))
         if batch_num % config['interval'] == 0  :
             list_loss.append(losses.data/config['interval']/config['batch_size'])
             list_seq_num.append(lengthes/1000) # per thousand
@@ -165,16 +192,54 @@ def evaluate(model,criterion,optimizer, test_data_loader) :
     print ("T = %d, Average loss %f, average cost %f" % (Y.size(0), losses.data[0]/lengthes, costs/lengthes))
     return losses.data/lengthes, costs/lengthes
 
+def report_result(model, criterion, optimizer, list_seq_num, list_loss, list_cost, config_obj, data_set):
+    pdb.set_trace()
+    config = config_obj.config_dict
+    if data_set == None:
+        saveCheckpoint(model,list_seq_num,list_loss, list_cost, path='ntm1') 
+    model, list_seq_num, list_loss, list_cost = loadCheckpoint(path=data_set)
+    plt.figure()
+    plt.plot(list_seq_num,list_cost)
+    plt.xlabel('Sequence number')
+    plt.ylabel('Cost per sequence')
+    plt.legend()
+    plt.savefig('NTM-xx.pdf')
+    list_avg_loss = []
+    list_avg_cost = []
+    list_T_num = []
+    for T in range(10,110,10) : 
+        seqs_loader = utility.load_dataset(config_obj, T, T)
+        avg_loss, avg_cost = evaluate(model, criterion, optimizer, seqs_loader)
+        list_avg_loss.append(avg_loss)
+        list_avg_cost.append(avg_cost)
+        list_T_num.append(T)
+
+    saveCheckpoint(model,list_T_num,list_avg_loss, list_avg_cost, path='ntm1-Ts') 
+    model, list_T_num, list_avg_loss, list_avg_cost = loadCheckpoint(path='ntm1-Ts')
+        
+    plt.plot(list_T_num,list_avg_cost)
+    plt.xlabel('T')
+    plt.ylabel('average cost')
+    plt.savefig('ntm-cost-T.pdf')
+
+
 if __name__ == '__main__':
-    # pdb.set_trace()
     args = utility.parse_args()
     config_type = args['configtype']
     config_file = args['configfile']
-    config = config.Configuration(config_type, config_file).config
+    data_set = args['data_set']
+    config_obj  = config.Configuration(config_type, config_file)
+    config      = config_obj.config_dict
     model, criterion, optimizer = models.build_model(config)
-    seqs_loader = utility.load_dataset(config)
+    seqs_loader = utility.load_dataset(config_obj)
+    print (config_obj.get_config_str())
     if config['model_type'] == "LSTM":
-        train_lstm_model(config, model, criterion, optimizer, seqs_loader)
+        list_seq_num,list_loss, list_cost = train_lstm_model(config, model, criterion, optimizer, seqs_loader)
     else:
-        train_ntm_model(config, model, criterion, optimizer, seqs_loader)
+        if data_set == None:
+            list_seq_num, list_loss, list_cost = train_ntm_model(config, model, criterion, optimizer, seqs_loader)
+            report_result(model, criterion, optimizer, list_seq_num,list_loss, list_cost, config_obj, data_set)
+        else:
+            print("Loading data set from: {0}".format(data_set))
+            report_result(model, criterion, optimizer, 0, 0, 0, config_obj, data_set)
 
