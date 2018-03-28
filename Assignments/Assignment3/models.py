@@ -42,7 +42,7 @@ def build_model(config):
         criterion = nn.BCELoss()
         optimizer = optim.Adam(model.parameters(),  lr=config['learning_rate'])
     elif config['model_type'] == 'LSTM_NTM':
-        model = EncapsulatedNTM(num_inputs=config['data_width']+1, num_outputs=config['data_width']+1,\
+        model = EncapsulatedNTM(num_inputs=config['data_width']+1, num_outputs=config['data_width'],\
                                 controller_size=100, controller_layers=1, num_heads=1, N=128, M=20, \
                                 controller_type ='lstm')
         criterion = nn.BCELoss()
