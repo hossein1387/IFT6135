@@ -1,31 +1,15 @@
+import argparse
 import os
-import sys
 import random
-
-import torch
-import torch.nn.functional as F
-import torch.optim as optim
-import torchvision.models as models
-import torch.backends.cudnn as cudnn
-import torch.nn as nn
-import torch.nn.parallel
-import torch.optim as optim
-import torch.utils.data as data
-import torchvision.datasets as datasets
-import torchvision.models as models
-import torch.utils.data.sampler as sampler
-import torchvision.transforms as transforms
-from torch.autograd import Variable
-import torch.autograd as autograd
-import torch.distributions as distributions
+import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
-from PIL import Image
-import ipdb as pdb
-import argparse
+import seaborn as sns
+import torch
+import torch.nn.parallel
 import yaml
-import config
+from torch.autograd import Variable
 
 
 def parse_args():
@@ -80,3 +64,31 @@ def load_dataset(config_obj, min=None, max=None):
             outp = seq.clone()
             yield batch_num+1, inp.float(), outp.float()
 
+
+def plot():
+    sns.set()
+    lstm_fname = 'LSTM_test_losses.np'
+    lstm_fname = os.path.join('logs', lstm_fname)
+    lstm_losses = np.loadtxt(lstm_fname)
+
+    ntm_fname = 'NTM_LSTM_test_losses.np'
+    ntm_fname = os.path.join('logs', ntm_fname)
+    ntm_losses = np.loadtxt(ntm_fname)
+
+    x = list(range(10, 110, 10))
+
+    plt.plot(x, lstm_losses, label='lstm')
+    plt.plot(x, ntm_losses, label='ntm')
+
+    plt.title('Graph of losses with varying sequence lengths')
+    plt.xlabel('sequence length')
+    plt.ylabel('loss')
+    plt.legend()
+
+    plot_fname = 'test_losses.png'
+    plot_fname = os.path.join('plots', plot_fname)
+    plt.savefig(plot_fname, bbox_inches='tight')
+
+    plt.clf()
+
+plot()

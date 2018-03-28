@@ -1,35 +1,15 @@
-import random
-import time
-import numpy as np
-import matplotlib.pyplot as plt
-
 import os
 import os.path
 import time
-import sys
 
-import torch
-import torch.nn.functional as F
-import torch.optim as optim
-import torchvision.models as models
-import torch.backends.cudnn as cudnn
-import torch.nn as nn
-import torch.nn.parallel
-import torch.optim as optim
-import torch.utils.data as data
-import torchvision.datasets as datasets
-import torchvision.models as models
-import torch.utils.data.sampler as sampler
-import torchvision.transforms as transforms
-from torch.autograd import Variable
-import torch.autograd as autograd
-import torch.distributions as distributions
-
-import ipdb as pdb
-
-import utility
 import config
 import models
+import numpy as np
+import torch
+import torch.nn.functional as F
+import torch.nn.parallel
+import utility
+from torch.autograd import Variable
 
 # Global Variables
 # Records the model's performance
@@ -66,12 +46,12 @@ def train_lstm_model(config, model, criterion, optimizer, seqs_loader):
     
     start_ms = get_ms()
 
-    list_losses =[]
+    list_losses = []
     list_costs =[]
     list_seq_num=[]
     losses=0
     costs=0
-    lengthes=0
+    lengths = 0
 
     for batch_num, X, Y, act in seqs_loader:
         model.init_hidden(config['batch_size'])
@@ -88,11 +68,11 @@ def train_lstm_model(config, model, criterion, optimizer, seqs_loader):
         cost = np.sum(np.abs(out_binarized - Y.data.numpy()))
         losses+=loss
         costs+=cost
-        lengthes+=config['batch_size']
+        lengths += config['batch_size']
         if (batch_num) % config['interval']==0 :
             list_costs.append(costs/config['interval']/config['batch_size']) #per sequence
             list_losses.append(losses.data[0]/config['interval']/config['batch_size'])
-            list_seq_num.append(lengthes) # per thousand
+            list_seq_num.append(lengths)  # per thousand
             mean_time = ((get_ms() - start_ms) / config['interval']) / config['batch_size']
             print ("Batch %d th, loss %f, cost %f, Time %.3f ms/sequence." % (batch_num, list_losses[-1], list_costs[-1], mean_time) )
             
@@ -173,7 +153,7 @@ def train_ntm_model(config, model, criterion, optimizer, train_data_loader) :
 def evaluate(model,criterion,optimizer, test_data_loader) : 
     costs = 0
     losses = 0
-    lengthes = 0
+    lengths = 0
     for batch_num, X, Y, act in test_data_loader:
         model.init_hidden(config['batch_size'])
         optimizer.zero_grad()
@@ -183,14 +163,29 @@ def evaluate(model,criterion,optimizer, test_data_loader) :
         loss = criterion(sigmoid_out, Y)
         loss.backward()
         optimizer.step()
-        lengthes+=config['batch_size']
+        lengths += 20
         losses += loss
         out_binarized = sigmoid_out.clone().data.numpy()
         out_binarized=np.where(out_binarized>0.5,1,0)
         cost = np.sum(np.abs(out_binarized - Y.data.numpy()))
         costs += cost
-    print ("T = %d, Average loss %f, average cost %f" % (Y.size(0), losses.data[0]/lengthes, costs/lengthes))
-    return losses.data/lengthes, costs/lengthes
+    print("T = %d, Average loss %f, average cost %f" % (
+    Y.size(0), losses.data[0] / lengths, costs / lengths))  # TODO: Check loss averaging
+    return losses.data / lengths, costs / lengths
+
+
+def test_sequences(config, model, criterion, optimizer):
+    seq_lengths = list(range(10, 110, 10))
+    losses = []
+    for seq_length in seq_lengths:
+        test_seqs_loader = utility.load_dataset(config, test=True, T=seq_length)
+        loss, _ = evaluate(model, criterion, optimizer, test_seqs_loader)
+        losses.append(loss)
+
+    losses = np.array(losses)
+    fname = config['model_type'] + '_test_losses.np'
+    fname = os.path.join('logs', fname)
+    np.savetxt(fname, losses)
 
 def report_result(model, criterion, optimizer, list_seq_num, list_loss, list_cost, config_obj, data_set):
     pdb.set_trace()
@@ -224,6 +219,7 @@ def report_result(model, criterion, optimizer, list_seq_num, list_loss, list_cos
 
 
 if __name__ == '__main__':
+    #pdb.set_trace()
     args = utility.parse_args()
     config_type = args['configtype']
     config_file = args['configfile']
@@ -242,4 +238,3 @@ if __name__ == '__main__':
         else:
             print("Loading data set from: {0}".format(data_set))
             report_result(model, criterion, optimizer, 0, 0, 0, config_obj, data_set)
-

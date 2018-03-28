@@ -1,31 +1,14 @@
-import numpy as np
-import utility
-import config
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
-import os
-import os.path
-import time
 import sys
 
 import torch
-import torch.nn.functional as F
-import torch.optim as optim
-import torchvision.models as models
-import torch.backends.cudnn as cudnn
+import torch.autograd as autograd
 import torch.nn as nn
 import torch.nn.parallel
 import torch.optim as optim
-import torch.utils.data as data
-import torchvision.datasets as datasets
-import torchvision.models as models
-import torch.utils.data.sampler as sampler
-import torchvision.transforms as transforms
-from torch.autograd import Variable
-import torch.autograd as autograd
-import torch.distributions as distributions
-import ntm 
 from aio import EncapsulatedNTM
+
 
 class LSTM(nn.Module):
     def __init__(self, config):
