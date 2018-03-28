@@ -10,6 +10,9 @@ import torch.nn.functional as F
 import torch.nn.parallel
 import utility
 from torch.autograd import Variable
+import ipdb as pdb
+import matplotlib.pyplot as plt
+
 
 # Global Variables
 # Records the model's performance
@@ -82,7 +85,28 @@ def train_lstm_model(config, model, criterion, optimizer, seqs_loader):
 
     return list_losses,list_costs,list_seq_num
 
-
+def evaluate_lstm(model,criterion,optimizer, test_data_loader, config) : 
+    costs = 0
+    losses = 0
+    lengths = 0
+    for batch_num, X, Y, act in test_data_loader:
+        model.init_hidden(config['batch_size'])
+        optimizer.zero_grad()
+        model.forward(X)
+        out_seq=model.forward(act)
+        sigmoid_out=F.sigmoid(out_seq)
+        loss = criterion(sigmoid_out, Y)
+        loss.backward()
+        optimizer.step()
+        lengths += 20
+        losses += loss
+        out_binarized = sigmoid_out.clone().data.numpy()
+        out_binarized=np.where(out_binarized>0.5,1,0)
+        cost = np.sum(np.abs(out_binarized - Y.data.numpy()))
+        costs += cost
+    print("T = %d, Average loss %f, average cost %f" % (
+    Y.size(0), losses.data[0] / lengths, costs / lengths))  # TODO: Check loss averaging
+    return losses.data / lengths, costs / lengths
 
 def saveCheckpoint(model,list_batch_num,list_loss, list_cost, path='lstm') :
     print('Saving..')
@@ -150,35 +174,77 @@ def train_ntm_model(config, model, criterion, optimizer, train_data_loader) :
     return list_seq_num, list_loss, list_cost
 
 
-def evaluate(model,criterion,optimizer, test_data_loader) : 
+def evaluate_ntm(model,criterion,optimizer, test_data_loader, config) :
     costs = 0
     losses = 0
-    lengths = 0
+    lengthes = 0
     for batch_num, X, Y, act in test_data_loader:
-        model.init_hidden(config['batch_size'])
+        model.init_sequence(config["batch_size"])
         optimizer.zero_grad()
-        model.forward(X)
-        out_seq=model.forward(act)
-        sigmoid_out=F.sigmoid(out_seq)
-        loss = criterion(sigmoid_out, Y)
+        inp_seq_len = X.size(0)
+        outp_seq_len, _, _ = Y.size()
+        for i in range(inp_seq_len):
+            model(X[i])
+        y_out = Variable(torch.zeros(Y.size()))
+        for i in range(outp_seq_len):
+            y_out[i], _ = model()
+        loss = criterion(y_out, Y)
         loss.backward()
+        clip_grads(model)
         optimizer.step()
-        lengths += 20
+        lengthes+=config['batch_size']
         losses += loss
-        out_binarized = sigmoid_out.clone().data.numpy()
+        out_binarized = y_out.clone().data.numpy()
         out_binarized=np.where(out_binarized>0.5,1,0)
         cost = np.sum(np.abs(out_binarized - Y.data.numpy()))
         costs += cost
-    print("T = %d, Average loss %f, average cost %f" % (
-    Y.size(0), losses.data[0] / lengths, costs / lengths))  # TODO: Check loss averaging
-    return losses.data / lengths, costs / lengths
+    print ("T = %d, Average loss %f, average cost %f" % (Y.size(0), losses.data[0]/lengthes, costs/lengthes))
+    return losses.data/lengthes, costs/lengthes
 
+def evaluate_single_batch(net, criterion, X, Y):
+    """Evaluate a single batch (without training)."""
+    inp_seq_len = X.size(0)
+    outp_seq_len, batch_size, _ = Y.size()
 
-def test_sequences(config, model, criterion, optimizer):
+    # New sequence
+    net.init_sequence(batch_size)
+
+    # Feed the sequence + delimiter
+    states = []
+    for i in range(inp_seq_len):
+        o, state = net(X[i])
+        states += [state]
+
+    # Read the output (no input given)
+    y_out = Variable(torch.zeros(Y.size()))
+    for i in range(outp_seq_len):
+        y_out[i], state = net()
+        states += [state]
+
+    loss = criterion(y_out, Y)
+
+    y_out_binarized = y_out.clone().data
+    y_out_binarized.apply_(lambda x: 0 if x < 0.5 else 1)
+
+    # The cost is the number of error bits per sequence
+    cost = torch.sum(torch.abs(y_out_binarized - Y.data))
+
+    result = {
+        'loss': loss.data[0],
+        'cost': cost / batch_size,
+        'y_out': y_out,
+        'y_out_binarized': y_out_binarized,
+        'states': states
+    }
+
+    return result
+
+def test_sequences(config_obj, model, criterion, optimizer):
     seq_lengths = list(range(10, 110, 10))
     losses = []
+    config = config_obj.config_dict
     for seq_length in seq_lengths:
-        test_seqs_loader = utility.load_dataset(config, test=True, T=seq_length)
+        test_seqs_loader = utility.load_dataset(config_obj, test=True, T=seq_length)
         loss, _ = evaluate(model, criterion, optimizer, test_seqs_loader)
         losses.append(loss)
 
@@ -188,7 +254,7 @@ def test_sequences(config, model, criterion, optimizer):
     np.savetxt(fname, losses)
 
 def report_result(model, criterion, optimizer, list_seq_num, list_loss, list_cost, config_obj, data_set):
-    pdb.set_trace()
+    # pdb.set_trace()
     config = config_obj.config_dict
     if data_set == None:
         saveCheckpoint(model,list_seq_num,list_loss, list_cost, path='ntm1') 
@@ -203,8 +269,9 @@ def report_result(model, criterion, optimizer, list_seq_num, list_loss, list_cos
     list_avg_cost = []
     list_T_num = []
     for T in range(10,110,10) : 
-        seqs_loader = utility.load_dataset(config_obj, T, T)
-        avg_loss, avg_cost = evaluate(model, criterion, optimizer, seqs_loader)
+        print("Evaluating {0} model on sequence size {1}".format(config['model_type'], T))
+        seqs_loader = utility.load_dataset(config_obj, max=T, min=T)
+        avg_loss, avg_cost = evaluate_ntm(model, criterion, optimizer, seqs_loader, config)
         list_avg_loss.append(avg_loss)
         list_avg_cost.append(avg_cost)
         list_T_num.append(T)

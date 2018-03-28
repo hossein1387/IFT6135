@@ -26,16 +26,21 @@ def clip_grads(net):
     for p in parameters:
         p.grad.data.clamp_(-10, 10)
 
-def load_dataset(config_obj, min=None, max=None):
+def load_dataset(config_obj, test=False, T=None, min=None, max=None):
     config = config_obj.config_dict
+    if test:
+        num_batches = 20
+    else:
+        num_batches = config['num_batches']
     batch_size = config['batch_size']
-    if min!=None and max!=None:
+    if not test and (min!=None and max!=None):
         seq_len = random.randint(min, max)
+    elif test:
+        seq_len = T
     else:
         seq_len = config_obj.seq_len
-    print("seq_len = {0}\n".format(seq_len))
-    if config['model_type'] == "LSTM":
-        for batch_num in range(config['num_batches']):
+#    if config['model_type'] == "LSTM":
+    for batch_num in range(config['num_batches']):
             seq = np.random.binomial(1, 0.5, (seq_len, batch_size, 8))
             seq = Variable(torch.from_numpy(seq))
 
@@ -50,6 +55,7 @@ def load_dataset(config_obj, min=None, max=None):
             act_inp[:seq_len, :, :config['data_width']] = seq2
 
             yield batch_num+1, inp.float(), outp.float(), act_inp.float()
+'''
     else:
         for batch_num in range(config['num_batches']):
 
@@ -63,7 +69,7 @@ def load_dataset(config_obj, min=None, max=None):
             inp[seq_len, :, config['data_width']] = 1.0 # delimiter in our control channel
             outp = seq.clone()
             yield batch_num+1, inp.float(), outp.float()
-
+'''
 
 def plot():
     sns.set()
@@ -90,3 +96,60 @@ def plot():
     plt.savefig(plot_fname, bbox_inches='tight')
 
     plt.clf()
+
+
+def visualize_read_write(X,result,N) :
+    T, batch_size, num_bits = X.size()
+    T = T - 1
+    num_bits = num_bits - 1
+    
+    plt.figure(figsize=(8, 6)) 
+    gs = gridspec.GridSpec(2, 2, height_ratios=[1, 3]) 
+    
+    ax = plt.subplot(gs[0,0])
+    y_in = torch.cat((X[:,0,:].data,torch.zeros(T,num_bits+1)),dim=0)
+    ax.imshow(torch.t(y_in), cmap='gray',aspect='auto')
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    ax.set_title('inputs')
+    
+    ax = plt.subplot(gs[0,1])
+    y_out = torch.cat((torch.zeros(T+1,num_bits),result['y_out_binarized'][:,0,:]),dim=0)
+    y_out = torch.cat((y_out,torch.zeros(2*T+1,1)),dim=1)
+    ax.imshow(torch.t(y_out), cmap='gray',aspect='auto')
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    ax.set_title('outputs')
+    
+    states = result['states']
+    read_state = torch.zeros(len(states),N)  # read weight
+    write_state = torch.zeros(len(states),N) # write weight
+    for i in range(0,len(states)) :
+        reads, controller_state, heads_states = states[i]
+        read_state[i,:] = heads_states[0][0].data
+        write_state[i,:] = heads_states[1][0].data
+        
+        
+    ax = plt.subplot(gs[1,0])
+    ax.imshow(torch.t(write_state[:,90:]), cmap='gray',aspect='auto')
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    #ax.text(1,40,'Time', fontsize=11)
+    ax.text(6,41,'Write Weightings',fontsize=12)
+    #ax.arrow(6,60,60, fc="k", ec="k", head_width=0.5, head_length=1, color='w')
+    #ax.annotate('Time', xy=(0.4, -0.1), xycoords='axes fraction', xytext=(0, -0.1),
+    #            arrowprops=dict(arrowstyle="->", color='black'))
+    #ax.annotate('Location', xy=(-0.2, 0.4), xycoords='axes fraction', xytext=(-0.26, 0), 
+    #            arrowprops=dict(arrowstyle="->", color='black'))
+    
+    
+    ax = plt.subplot(gs[1,1])
+    ax.imshow(torch.t(read_state[:,90:]), cmap='gray',aspect='auto')
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    #ax.text(1,40,'Time', fontsize=11)
+    ax.text(6,41,'Read Weightings',fontsize=12)
+    
+    plt.tight_layout()
+    plt.savefig('visualization.pdf')
+    plt.show()
