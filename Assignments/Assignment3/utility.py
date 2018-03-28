@@ -82,7 +82,7 @@ def plot():
     lstm_fname = os.path.join('logs', lstm_fname)
     lstm_losses = np.loadtxt(lstm_fname)
 
-    ntm_fname = 'NTM_test_losses.np'
+    ntm_fname = 'NTM_LSTM_test_losses.np'
     ntm_fname = os.path.join('logs', ntm_fname)
     ntm_losses = np.loadtxt(ntm_fname)
 
@@ -101,6 +101,5 @@ def plot():
     plt.savefig(plot_fname, bbox_inches='tight')
 
     plt.clf()
-
 
 plot()

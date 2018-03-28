@@ -1,38 +1,15 @@
-import random
-import time
-import numpy as np
-import matplotlib.pyplot as plt
-
 import os
 import os.path
 import time
-import sys
 
 import config
 import models
 import numpy as np
 import torch
 import torch.nn.functional as F
-import torch.optim as optim
-import torchvision.models as models
-import torch.backends.cudnn as cudnn
-import torch.nn as nn
 import torch.nn.parallel
-import torch.optim as optim
-import torch.utils.data as data
-import torchvision.datasets as datasets
-import torchvision.models as models
-import torch.utils.data.sampler as sampler
-import torchvision.transforms as transforms
-from torch.autograd import Variable
-import torch.autograd as autograd
-import torch.distributions as distributions
-
-import ipdb as pdb
-
 import utility
-import config
-import models
+from torch.autograd import Variable
 
 # Global Variables
 # Records the model's performance
@@ -48,6 +25,8 @@ def clip_grads(net):
     for p in parameters:
         p.grad.data.clamp_(-10, 10)
 
+
+'''
 def gen1seq():
     length=np.random.randint(2,SEQUENCE_MAX_LEN+1)
     # length=SEQ_SIZE+1
@@ -56,6 +35,7 @@ def gen1seq():
     seq[-1]=0.0
     seq[-1,-1,-1]=1.0
     return seq
+'''
 
 def gen1seq_act(length):
     seq=torch.zeros(9*length).view(length, 1, -1)+0.5
@@ -113,7 +93,7 @@ def train_ntm_model(config, model, criterion, optimizer, train_data_loader) :
     losses = 0
     costs = 0
     for batch_num, X, Y  in train_data_loader:
-        pdb.set_trace()
+        # pdb.set_trace()
         inp_seq_len, _, _ = X.size()
         outp_seq_len, config['batch_size'], output_size = Y.size()
         model.init_sequence(config['batch_size'])
@@ -184,7 +164,7 @@ def test_sequences(config, model, criterion, optimizer):
     np.savetxt(fname, losses)
 
 if __name__ == '__main__':
-    pdb.set_trace()
+    #pdb.set_trace()
     args = utility.parse_args()
     config_type = args['configtype']
     config_file = args['configfile']
@@ -195,5 +175,4 @@ if __name__ == '__main__':
         train_lstm_model(config, model, criterion, optimizer, seqs_loader)
     else:
         train_ntm_model(config, model, criterion, optimizer, seqs_loader)
-
     test_sequences(config, model, criterion, optimizer)
