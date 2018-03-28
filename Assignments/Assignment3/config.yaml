@@ -14,7 +14,7 @@ LSTM:
 LSTM_NTM:
     model_type: 'LSTM_NTM'
     learning_rate: 0.0001
-    batch_size: 50
+    batch_size: 1
     num_epochs: 2000
     momentum: 0.9
     filename: 'LSTM_NTM'
@@ -27,7 +27,7 @@ LSTM_NTM:
 MLP_NTM:
     model_type: 'MLP_NTM'
     learning_rate: 0.001
-    batch_size: 50
+    batch_size: 1
     num_epochs: 100
     momentum: 0.9
     filename: 'MLP_NTM'
