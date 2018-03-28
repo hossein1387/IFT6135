@@ -90,5 +90,3 @@ def plot():
     plt.savefig(plot_fname, bbox_inches='tight')
 
     plt.clf()
-
-plot()
