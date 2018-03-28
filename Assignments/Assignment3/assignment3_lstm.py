@@ -39,6 +39,12 @@ def get_ms():
     """Returns the current time in miliseconds."""
     return time.time() * 1000
 
+def clip_grads(net):
+    """Gradient clipping to the range [10, 10]."""
+    parameters = list(filter(lambda p: p.grad is not None, net.parameters()))
+    for p in parameters:
+        p.grad.data.clamp_(-10, 10)
+        
 def gen1seq():
     length=np.random.randint(2,SEQUENCE_MAX_LEN+1)
     # length=SEQ_SIZE+1
@@ -104,7 +110,7 @@ def train_ntm_model(config, model, criterion, optimizer, train_data_loader) :
     losses = 0
     costs = 0
     for batch_num, X, Y  in train_data_loader:
-        pdb.set_trace()
+        # pdb.set_trace()
         inp_seq_len, _, _ = X.size()
         outp_seq_len, config['batch_size'], output_size = Y.size()
         model.init_sequence(config['batch_size'])
@@ -160,7 +166,7 @@ def evaluate(model,criterion,optimizer, test_data_loader) :
     return losses.data/lengthes, costs/lengthes
 
 if __name__ == '__main__':
-    pdb.set_trace()
+    # pdb.set_trace()
     args = utility.parse_args()
     config_type = args['configtype']
     config_file = args['configfile']
