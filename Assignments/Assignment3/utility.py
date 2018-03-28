@@ -32,17 +32,9 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--configfile', help='config file in yaml format', required=True)
     parser.add_argument('-t', '--configtype', help='configurations to run', required=True)
+    parser.add_argument('-l', '--data_set', help='configurations to run', required=False)
     args = parser.parse_args()
     return vars(args)
-
-def read_config_file(config_file):
-    with open(config_file, 'r') as stream:
-        try:
-            configs = yaml.load(stream)
-        except yaml.YAMLError as exc:
-            print ("Error loading YAML file {0}".format(config_file))
-            sys.exit()
-    return configs
 
 def clip_grads(net):
     """Gradient clipping to the range [10, 10]."""
@@ -50,11 +42,16 @@ def clip_grads(net):
     for p in parameters:
         p.grad.data.clamp_(-10, 10)
 
-def load_dataset(config):
+def load_dataset(config_obj, min=None, max=None):
+    config = config_obj.config_dict
     batch_size = config['batch_size']
+    if min!=None and max!=None:
+        seq_len = random.randint(min, max)
+    else:
+        seq_len = config_obj.seq_len
+    print("seq_len = {0}\n".format(seq_len))
     if config['model_type'] == "LSTM":
         for batch_num in range(config['num_batches']):
-            seq_len = random.randint(config['seq_len_min'], config['seq_len_max'])
             seq = np.random.binomial(1, 0.5, (seq_len, batch_size, 8))
             seq = Variable(torch.from_numpy(seq))
 
@@ -73,7 +70,6 @@ def load_dataset(config):
         for batch_num in range(config['num_batches']):
 
             # All batches have the same sequence length
-            seq_len = random.randint(config['seq_len_min'], config['seq_len_max'])
             seq = np.random.binomial(1, 0.5, (seq_len, batch_size, config['data_width']))
             seq = Variable(torch.from_numpy(seq))
 
