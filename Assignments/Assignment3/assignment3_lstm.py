@@ -138,7 +138,7 @@ def train_ntm_model(config, model, criterion, optimizer, train_data_loader) :
     losses = 0
     costs = 0
     cnt = 0
-    for batch_num, X, Y  in train_data_loader:
+    for batch_num, X, Y, act  in train_data_loader:
         # pdb.set_trace()
         inp_seq_len, _, _ = X.size()
         outp_seq_len, config['batch_size'], output_size = Y.size()
@@ -253,12 +253,12 @@ def test_sequences(config_obj, model, criterion, optimizer):
     fname = os.path.join('logs', fname)
     np.savetxt(fname, losses)
 
-def report_result(model, criterion, optimizer, list_seq_num, list_loss, list_cost, config_obj, data_set):
+def report_result(model, criterion, optimizer, list_seq_num, list_loss, list_cost, config_obj, load_checkpoint):
     # pdb.set_trace()
     config = config_obj.config_dict
-    if data_set == None:
-        saveCheckpoint(model,list_seq_num,list_loss, list_cost, path='ntm1') 
-    model, list_seq_num, list_loss, list_cost = loadCheckpoint(path=data_set)
+    if not load_checkpoint:
+        saveCheckpoint(model,list_seq_num,list_loss, list_cost, path=config['filename']) 
+    model, list_seq_num, list_loss, list_cost = loadCheckpoint(path=config['filename'])
     plt.figure()
     plt.plot(list_seq_num,list_cost)
     plt.xlabel('Sequence number')
@@ -290,18 +290,19 @@ if __name__ == '__main__':
     args = utility.parse_args()
     config_type = args['configtype']
     config_file = args['configfile']
-    data_set = args['data_set']
+    load_checkpoint = args['load_checkpoint']
     config_obj  = config.Configuration(config_type, config_file)
     config      = config_obj.config_dict
     model, criterion, optimizer = models.build_model(config)
     seqs_loader = utility.load_dataset(config_obj)
-    print (config_obj.get_config_str())
+    if not load_checkpoint:
+        print (config_obj.get_config_str())
     if config['model_type'] == "LSTM":
         list_seq_num,list_loss, list_cost = train_lstm_model(config, model, criterion, optimizer, seqs_loader)
     else:
-        if data_set == None:
+        if not load_checkpoint:
             list_seq_num, list_loss, list_cost = train_ntm_model(config, model, criterion, optimizer, seqs_loader)
-            report_result(model, criterion, optimizer, list_seq_num,list_loss, list_cost, config_obj, data_set)
+            report_result(model, criterion, optimizer, list_seq_num,list_loss, list_cost, config_obj, load_checkpoint)
         else:
-            print("Loading data set from: {0}".format(data_set))
-            report_result(model, criterion, optimizer, 0, 0, 0, config_obj, data_set)
+            print("Loading checkpoint from: {0}".format(load_checkpoint))
+            report_result(model, criterion, optimizer, 0, 0, 0, config_obj, load_checkpoint)
