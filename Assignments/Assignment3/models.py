@@ -54,6 +54,7 @@ def build_model(config):
                                 controller_type ='lstm')
         criterion = nn.BCELoss()
         optimizer = optim.RMSprop(model.parameters(), lr=config['learning_rate'], momentum = config['momentum'])
+        model.apply(weights_init)
     elif config['model_type'] == 'MLP_NTM':
         model = EncapsulatedNTM(num_inputs=config['data_width']+1, num_outputs=config['data_width'],\
                                 controller_size=100, controller_layers=1, num_heads=1, N=128, M=20, \
