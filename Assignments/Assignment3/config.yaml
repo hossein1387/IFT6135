@@ -4,7 +4,7 @@ LSTM:
     batch_size: 50
     num_epochs: 100
     momentum: 0.9
-    filename: 'LSTM'
+    filename: 'lstm_checkpoint'
     interval: 100
     seq_len_min: 1
     seq_len_max: 20
@@ -17,7 +17,7 @@ LSTM_NTM:
     batch_size: 1
     num_epochs: 2000
     momentum: 0.9
-    filename: 'LSTM_NTM'
+    filename: 'lstm_ntm_checkpoint'
     interval: 100
     seq_len_min: 1
     seq_len_max: 20
@@ -30,7 +30,7 @@ MLP_NTM:
     batch_size: 1
     num_epochs: 100
     momentum: 0.9
-    filename: 'MLP_NTM'
+    filename: 'mlp_ntm_checkpoint'
     interval: 100
     seq_len_min: 1
     seq_len_max: 20
