@@ -9,6 +9,13 @@ import torch.nn.parallel
 import torch.optim as optim
 from aio import EncapsulatedNTM
 
+# classname.find("NTM") != -1 or 
+# custom weights initialization called on netG and netD
+def weights_init(m):
+    classname = m.__class__.__name__
+    if classname.find("Linear") != -1 or classname.find("LSTM") != -1: 
+        nn.init.xavier_uniform(m.weight, gain=nn.init.calculate_gain('sigmoid'))
+
 
 class LSTM(nn.Module):
     def __init__(self, config):
@@ -53,6 +60,7 @@ def build_model(config):
                                 controller_type ='mlp')
         criterion = nn.BCELoss()
         optimizer = optim.RMSprop(model.parameters(), lr=config['learning_rate'], momentum = config['momentum'])
+        model.apply(weights_init)
     else:
         print ("Config type {0} is unknown".format(config['model_type']))
         sys.exit()
