@@ -55,21 +55,6 @@ def load_dataset(config_obj, test=False, T=None, min=None, max=None):
             act_inp[:seq_len, :, :config['data_width']] = seq2
 
             yield batch_num+1, inp.float(), outp.float(), act_inp.float()
-'''
-    else:
-        for batch_num in range(config['num_batches']):
-
-            # All batches have the same sequence length
-            seq = np.random.binomial(1, 0.5, (seq_len, batch_size, config['data_width']))
-            seq = Variable(torch.from_numpy(seq))
-
-            # The input includes an additional channel used for the delimiter
-            inp = Variable(torch.zeros(seq_len + 1, batch_size, config['data_width'] + 1))
-            inp[:seq_len, :, :config['data_width']] = seq
-            inp[seq_len, :, config['data_width']] = 1.0 # delimiter in our control channel
-            outp = seq.clone()
-            yield batch_num+1, inp.float(), outp.float()
-'''
 
 def plot():
     sns.set()
