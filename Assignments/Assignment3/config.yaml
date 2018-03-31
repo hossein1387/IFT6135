@@ -6,9 +6,9 @@ LSTM:
     momentum: 0.9
     filename: 'lstm_checkpoint'
     interval: 100
-    seq_len_min: 2
-    seq_len_max: 2
-    num_hidden: 100
+    seq_len_min: 10
+    seq_len_max: 10
+    num_hidden: 1
     num_batches: 20000
     data_width: 8
 LSTM_NTM:
@@ -19,9 +19,9 @@ LSTM_NTM:
     momentum: 0.9
     filename: 'lstm_ntm_checkpoint'
     interval: 100
-    seq_len_min: 2
-    seq_len_max: 2
-    num_hidden: 100
+    seq_len_min: 10
+    seq_len_max: 10
+    num_hidden: 1
     num_batches: 20000
     data_width: 8
 MLP_NTM:
@@ -32,8 +32,8 @@ MLP_NTM:
     momentum: 0.9
     filename: 'mlp_ntm_checkpoint'
     interval: 100
-    seq_len_min: 2
-    seq_len_max: 2
-    num_hidden: 100
+    seq_len_min: 10
+    seq_len_max: 10
+    num_hidden: 1
     num_batches: 20000
     data_width: 8
