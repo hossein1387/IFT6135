@@ -242,7 +242,7 @@ def report_result(model, criterion, optimizer, list_seq_num, list_loss, list_cos
     model, list_seq_num, list_loss, list_cost = loadCheckpoint(path=config['filename'])
     plt.figure()
     plt.plot(list_seq_num,list_cost)
-    plt.xlabel('Sequence number')
+    plt.xlabel('Sequence number (Thousands)')
     plt.ylabel('Cost per sequence')
     plt.legend()
     plt.savefig('{0}_cost_per_seq.pdf'.format(config['filename']))
