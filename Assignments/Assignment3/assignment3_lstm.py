@@ -4,7 +4,6 @@ import os
 import os.path
 import time
 
-import config
 import models
 import numpy as np
 import torch
@@ -12,7 +11,6 @@ import torch.nn.functional as F
 import torch.nn.parallel
 import utility
 from torch.autograd import Variable
-import ipdb as pdb
 import matplotlib.pyplot as plt
 
 
@@ -30,6 +28,8 @@ def clip_grads(net):
     for p in parameters:
         p.grad.data.clamp_(-10, 10)
 
+
+'''
 def gen1seq():
     length=np.random.randint(2,SEQUENCE_MAX_LEN+1)
     # length=SEQ_SIZE+1
@@ -38,7 +38,7 @@ def gen1seq():
     seq[-1]=0.0
     seq[-1,-1,-1]=1.0
     return seq
-
+'''
 def gen1seq_act(length):
     seq=torch.zeros(9*length).view(length, 1, -1)+0.5
     seq[:,:,-1]=0.0
@@ -270,29 +270,68 @@ def report_average_cost(model, criterion, optimizer, list_seq_num, list_loss, li
     plt.ylabel('average cost')
     plt.savefig('{0}_average_cost.pdf'.format(config['filename']))
 
-if __name__ == '__main__':
-    #pdb.set_trace()
+
+def run():
+    global config
     args = utility.parse_args()
     config_type = args['configtype']
     config_file = args['configfile']
     load_checkpoint = args['load_checkpoint']
-    config_obj  = config.Configuration(config_type, config_file)
-    config      = config_obj.config_dict
+    config_obj = config.Configuration(config_type, config_file)
+    config = config_obj.config_dict
     model, criterion, optimizer = models.build_model(config)
     seqs_loader = utility.load_dataset(config_obj)
     if not load_checkpoint:
-        print (config_obj.get_config_str())
+        print(config_obj.get_config_str())
     if config['model_type'] == "LSTM":
         if not load_checkpoint:
-            list_seq_num,list_loss, list_cost = train_lstm_model(config, model, criterion, optimizer, seqs_loader)
-            report_result(model, criterion, optimizer, list_seq_num,list_loss, list_cost, config_obj, load_checkpoint)
+            list_seq_num, list_loss, list_cost = train_lstm_model(config, model, criterion, optimizer, seqs_loader)
+            report_result(model, criterion, optimizer, list_seq_num, list_loss, list_cost, config_obj, load_checkpoint)
         else:
             print("Loading checkpoint from: {0}".format(config['filename']))
             report_average_cost(model, criterion, optimizer, 0, 0, 0, config_obj)
     else:
         if not load_checkpoint:
             list_seq_num, list_loss, list_cost = train_ntm_model(config, model, criterion, optimizer, seqs_loader)
-            report_result(model, criterion, optimizer, list_seq_num,list_loss, list_cost, config_obj, load_checkpoint)
+            report_result(model, criterion, optimizer, list_seq_num, list_loss, list_cost, config_obj, load_checkpoint)
         else:
             print("Loading checkpoint from: {0}".format(config['filename']))
             report_average_cost(model, criterion, optimizer, 0, 0, 0, config_obj)
+
+
+def hyperparam_search():
+    global config
+    model_types = ['MLP_NTM', 'LSTM', 'LSTM_NTM']
+    learning_rates = [0.001, 0.0005, 0.00001]
+    batch_sizes = [1, 2]
+    config_obj = config.Configuration('LSTM', 'config.yaml')
+    config = config_obj.config_dict
+
+    for model_type in model_types:
+        for learning_rate in learning_rates:
+            for batch_size in batch_sizes:
+
+                config['model_type'] = model_type
+                config['learning_rate'] = learning_rate
+                config['batch_size'] = batch_size
+                config['filename'] = model_type + '_' + str(learning_rate) + '_' + str(batch_size)
+
+                config_obj.config_dict = config
+
+                model, criterion, optimizer = models.build_model(config)
+                seqs_loader = utility.load_dataset(config_obj)
+
+                if config['model_type'] == "LSTM":
+                    list_seq_num, list_loss, list_cost = train_lstm_model(config, model, criterion, optimizer,
+                                                                          seqs_loader)
+                    report_result(model, criterion, optimizer, list_seq_num, list_loss, list_cost, config_obj, False)
+                else:
+                    list_seq_num, list_loss, list_cost = train_ntm_model(config, model, criterion, optimizer,
+                                                                         seqs_loader)
+                    report_result(model, criterion, optimizer, list_seq_num, list_loss, list_cost, config_obj, False)
+
+
+if __name__ == '__main__':
+    #pdb.set_trace()
+    run()
+    # hyperparam_search()
