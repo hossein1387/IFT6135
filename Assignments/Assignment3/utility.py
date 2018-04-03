@@ -14,9 +14,11 @@ from torch.autograd import Variable
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', '--configfile', help='config file in yaml format', required=True)
-    parser.add_argument('-t', '--configtype', help='configurations to run', required=True)
+    parser.add_argument('-f', '--configfile', help='config file in yaml format', required=False)
+    parser.add_argument('-t', '--configtype', help='configurations to run', required=False)
     parser.add_argument('-l', '--load_checkpoint', help='loads a checkpoint', required=False, action='store_true')
+    parser.add_argument('-p', '--plot_all_average', help='plots all average cost', required=False, action='store_true')
+    parser.add_argument('-v', '--visualize_read_write', help='visualization of read and write access', required=False, action='store_true')
     args = parser.parse_args()
     return vars(args)
 
