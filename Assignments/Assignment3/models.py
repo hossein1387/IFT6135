@@ -8,6 +8,7 @@ import torch.nn as nn
 import torch.nn.parallel
 import torch.optim as optim
 from aio import EncapsulatedNTM
+import torch.nn.functional as F
 
 # classname.find("NTM") != -1 or 
 # custom weights initialization called on netG and netD
@@ -33,6 +34,7 @@ class LSTM(nn.Module):
         # out, (self.hidden, self.cell) = self.lstm(inputs, None)
         out, self.hidden = self.lstm(sequence, self.hidden)
         out=self.mlp(out)
+        out = F.sigmoid(out)
         return out
 
     def calculate_num_params(self):
@@ -53,13 +55,13 @@ def build_model(config):
                                 controller_size=100, controller_layers=1, num_heads=1, N=128, M=20, \
                                 controller_type ='lstm')
         criterion = nn.BCELoss()
-        optimizer = optim.RMSprop(model.parameters(), lr=config['learning_rate'], momentum = config['momentum'])
+        optimizer = optim.Adam(model.parameters(), lr=config['learning_rate'])
     elif config['model_type'] == 'MLP_NTM':
         model = EncapsulatedNTM(num_inputs=config['data_width']+1, num_outputs=config['data_width'],\
                                 controller_size=100, controller_layers=1, num_heads=1, N=128, M=20, \
                                 controller_type ='mlp')
         criterion = nn.BCELoss()
-        optimizer = optim.RMSprop(model.parameters(), lr=config['learning_rate'], momentum = config['momentum'])
+        optimizer = optim.Adam(model.parameters(), lr=config['learning_rate'])
         model.apply(weights_init)
     else:
         print ("Config type {0} is unknown".format(config['model_type']))
