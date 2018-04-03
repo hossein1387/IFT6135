@@ -75,3 +75,4 @@ class MLPController(nn.Module):
         x = x.unsqueeze(0)
         outp = self.mlp(x)
         return outp.squeeze(0), state
+        
