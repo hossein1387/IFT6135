@@ -256,7 +256,7 @@ def report_average_cost(model, criterion, optimizer, list_seq_num, list_loss, li
     for T in range(10,110,10) : 
         print("Evaluating {0} model on sequence size {1}".format(config['model_type'], T))
         config_obj.config_dict['num_batches'] = 1
-        config_obj.config_dict['batch_size'] = 50
+        config_obj.config_dict['batch_size'] = 1
         seqs_loader = utility.load_dataset(config_obj, max=T, min=T)
         if config['model_type'] == 'LSTM':
             avg_loss, avg_cost = evaluate_lstm(model, criterion, optimizer, seqs_loader, config)
@@ -375,8 +375,8 @@ def evaluate_single_batch(net, criterion, X, Y):
 
 def  visualize_read_write(model, criterion, optimizer, config_obj):
     T = 10
-    config_obj.config_dict['num_batches'] = 1
-    config_obj.config_dict['batch_size'] = 50
+    config_obj.config_dict['num_batches'] = 20
+    config_obj.config_dict['batch_size'] = 1
     seqs_loader = utility.load_dataset(config_obj, max=T, min=T)
 
     for batch_num, X, Y, act in seqs_loader :
@@ -384,7 +384,7 @@ def  visualize_read_write(model, criterion, optimizer, config_obj):
         plot_visualization(X,result,model.N)
 
 if __name__ == '__main__':
-    #pdb.set_trace()
+    # pdb.set_trace()
     args = utility.parse_args()
     config_type = args['configtype']
     config_file = args['configfile']
@@ -398,7 +398,7 @@ if __name__ == '__main__':
         config      = config_obj.config_dict
         model, criterion, optimizer = models.build_model(config)
         seqs_loader = utility.load_dataset(config_obj)
-        if visualize_read_write:
+        if visualize_read_write_flag:
             model, list_seq_num, list_loss, list_cost = loadCheckpoint(path=config['filename'])
             visualize_read_write(model, criterion, optimizer, config_obj)
         else:
