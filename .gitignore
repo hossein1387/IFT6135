@@ -1,4 +1,8 @@
 *DS_Store
 *.pyc
 *.png
+*.pdf
+*.PDF
+*.ipynb
 Project/src/data
+Assignments/Assignment3/checkpoint/
