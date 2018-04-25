@@ -79,6 +79,6 @@ Q2:
     batch_size_test: 1
     lr0: 0.001
     momentum: 0.9
-    data_set_path: 'datasets/PetImages'
+    data_set_path: 'datasets/PetImages_orig'
     model_sample_interval: 10
 
