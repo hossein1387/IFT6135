@@ -15,8 +15,8 @@ import torchvision.transforms as transforms
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', '--configfile', help='config file in yaml format', required=True)
-    parser.add_argument('-t', '--configtype', help='configurations to run', required=True)
+    parser.add_argument('-f', '--configfile', help='config file in yaml format', required=False, default="config.yaml")
+    parser.add_argument('-t', '--configtype', help='configurations to run', required=False, default="MNIST")
     args = parser.parse_args()
     return vars(args)
 

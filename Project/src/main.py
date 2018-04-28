@@ -9,7 +9,7 @@ import models
 
 
 def build_model(config):
-    model = models.CNN()
+    model = models.CNN(config)
     # Loss and Optimizer
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])
