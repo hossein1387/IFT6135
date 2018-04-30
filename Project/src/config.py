@@ -27,10 +27,11 @@ class Configuration():
                      "number of error bits: {5} \n"\
                      "number of randomizer bits: {6} \n"\
                      "number of epochs: {7} \n"\
-                     "batch size: {8} \n".\
+                     "batch size: {8} \n"\
+                     "model type: {9} \n".\
                      format(self.config_dict['dataset'], self.config_dict['lr'], self.config_dict['wbits'], self.config_dict['abits'],\
                             self.config_dict['gbits'], self.config_dict['ebits'], self.config_dict['rand_bits'], self.config_dict['num_epochs'],\
-                            self.config_dict['batchsize'])
+                            self.config_dict['batchsize'], self.config_dict['model_type'])
         return "========================================================\nConfiguration:\n========================================================\n{0}".format(config_str)
 
     def read_config(self):
