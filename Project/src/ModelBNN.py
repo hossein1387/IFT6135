@@ -27,9 +27,9 @@ class ModelBNN(ModelConstrained):
     """
     https://arxiv.org/pdf/1602.02830.pdf
     """
-    def __init__(self, dataset):
+    def __init__(self, config):
         super().__init__()
-        self.dataset   = dataset
+        self.dataset   = config['dataset']
         inChan         =     1 if dataset == "mnist"    else  3
         outChan        =   100 if dataset == "cifar100" else 10
         epsilon        = 1e-4   # Some epsilon
