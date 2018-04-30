@@ -8,22 +8,61 @@ def Shift(x):
     # import ipdb as pdb; pdb.set_trace()
     return 2 ** torch.round(torch.log(x) / math.log(2))
 
-def C(x, bits=32):
-    if bits > 15 or bits == 1:
-        delta = 0.
-    else:
+class WAGEClip(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, x):
+        ctx.save_for_backward(x)
         delta = 1. / S(bits)
-    MAX = +1 - delta
-    MIN = -1 + delta
-    x = torch.clamp(x, min=MIN, max=MAX)
-    return x
+        MAX = +1 - delta
+        MIN = -1 + delta
+        x = torch.clamp(x, min=MIN, max=MAX)
+        return x
+    
+    @staticmethod
+    def backward(ctx, dx):
+        x, = ctx.saved_variables
+        
+        gt1  = x > (1 - delta)
+        lsm1 = x < (-1 + delta)
+        gi   = 1-gt1.float()-lsm1.float()
+        return gi*dx
+wage_clip = WAGEClip.apply
+
+
+class WAGEWQuant(torch.autograd.Function):
+
+def W(x, wbits, scale = 1.0):
+    y = Q(wage_clip(x, wbits), wbits)
+    # we scale W in QW rather than QA for simplicity
+    if scale > 1.8:
+      y = y/scale
+    # if bitsG > 15:
+      # when not quantize gradient, we should rescale the scale factor in backprop
+      # otherwise the learning rate will have decay factor scale
+      # x = x * scale
+    return x + (y - x).detach()  # skip derivation of Quantize and Clip
+    
+    @staticmethod
+    def forward(ctx, x):
+        ctx.save_for_backward(x)
+        delta = 1. / S(bits)
+        MAX = +1 - delta
+        MIN = -1 + delta
+        x = torch.clamp(x, min=MIN, max=MAX)
+        return x
+    
+    @staticmethod
+    def backward(ctx, dx):
+        x, = ctx.saved_variables
+        
+        gt1  = x > (1 - delta)
+        lsm1 = x < (-1 + delta)
+        gi   = 1-gt1.float()-lsm1.float()
+        return gi*dx
+w_quant = WAGEWQuant.apply
+
 
 def Q(x, bits):
-    if bits > 15:
-        return x
-    elif bits == 1:  # BNN
-        return torch.sign(x)
-    else:
         SCALE = S(bits)
         return torch.round(x * SCALE) / SCALE
 
@@ -35,20 +74,9 @@ def E(x, bitsE):
         xmax_shift = Shift(xmax)
     return Q(C( x /xmax_shift, bitsE), bitsE)
 
-def W(x,scale = 1.0):
-    y = Q(C(x, bitsW), bitsW)
-    # we scale W in QW rather than QA for simplicity
-    if scale > 1.8:
-      y = y/scale
-    # if bitsG > 15:
-      # when not quantize gradient, we should rescale the scale factor in backprop
-      # otherwise the learning rate will have decay factor scale
-      # x = x * scale
-    return x + (y - x).detach()  # skip derivation of Quantize and Clip
-
-def A(x, bitsA):
-    x = C(x, bitsA)
-    y = Q(x, bitsA)
+def A(x, abits):
+    x = C(x, abits)
+    y = Q(x, abits)
     return x + (y - x).detach()  # skip derivation of Quantize, but keep Clip
 
 def G(x):
@@ -73,3 +101,26 @@ def G(x):
 
       return norm / S(bitsG)
 
+
+class BNNSign(torch.autograd.Function):
+    """
+    BinaryNet q = Sign(r) with gradient override.
+    Equation (1) and (4) of https://arxiv.org/pdf/1602.02830.pdf
+    """
+    
+    @staticmethod
+    def forward(ctx, x):
+        ctx.save_for_backward(x)
+        return x.sign()
+    
+    @staticmethod
+    def backward(ctx, dx):
+        x, = ctx.saved_variables
+        
+        gt1  = x > +1
+        lsm1 = x < -1
+        gi   = 1-gt1.float()-lsm1.float()
+        
+        return gi*dx
+
+bnn_sign = BNNSign.apply
