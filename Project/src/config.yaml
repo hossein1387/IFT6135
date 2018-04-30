@@ -1,5 +1,5 @@
-MNIST:
-    dataset: 'MNIST'
+BNN:
+    dataset: 'mnist'
     wbits: 2
     abits: 8
     gbits: 8
@@ -8,3 +8,26 @@ MNIST:
     lr: 0.001
     batchsize: 100
     num_epochs: 1
+    model_type: "bnn"
+CNN:
+    dataset: 'mnist'
+    wbits: 2
+    abits: 8
+    gbits: 8
+    ebits: 8
+    rand_bits: 16
+    lr: 0.001
+    batchsize: 100
+    num_epochs: 1
+    model_type: "cnn"
+WAGE:
+    dataset: 'mnist'
+    wbits: 2
+    abits: 8
+    gbits: 8
+    ebits: 8
+    rand_bits: 16
+    lr: 0.001
+    batchsize: 100
+    num_epochs: 1
+    model_type: "wage"
