@@ -7,9 +7,16 @@ import utility
 import config
 import models 
 
-
 def build_model(config):
-    model = models.CNN(config)
+    model_type = config['model_type']
+    if model_type =='cnn':
+        model = models.CNN(config)
+    elif model_type =='bnn':
+        model = models.BNN(config)
+    elif model_type =='wage':
+        model = models.WAGE(config)
+    else:
+        print("model_type={0} is not supported yet!".fortmat(model_type))
     # Loss and Optimizer
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])
@@ -52,9 +59,9 @@ def train_model(model, criterion, optimizer, train_loader, train_dataset, config
 
 if __name__ == '__main__':
     args = utility.parse_args()
-    config_type = args['configtype']
+    model_type = args['modelype']
     config_file = args['configfile']
-    config = config.Configuration(config_type, config_file)
+    config = config.Configuration(model_type, config_file)
     print(config.get_config_str())
     config = config.config_dict
     model, criterion, optimizer = build_model(config)
