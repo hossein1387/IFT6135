@@ -2,10 +2,7 @@
 import numpy                                as np
 import torch
 import torch.nn.functional                  as TNF
-
-from   functional                       import *
-
-
+from Quantize import *
 
 #
 # PyTorch Convolution Layers
@@ -134,6 +131,7 @@ class Conv2dWAGE(torch.nn.Conv2d):
     def __init__(self, in_channels,
                        out_channels,
                        kernel_size,
+                       config,
                        stride       = 1,
                        padding      = 0,
                        dilation     = 1,
@@ -144,19 +142,20 @@ class Conv2dWAGE(torch.nn.Conv2d):
         #
         # Fan-in/fan-out computation
         #
-        num_inputs = in_channels
-        num_units  = out_channels
+        self.config = config
+        self.num_inputs = in_channels
+        self.num_units  = out_channels
         for x in kernel_size:
-            num_inputs *= x
-            num_units  *= x
+            self.num_inputs *= x
+            self.num_units  *= x
         
         if H == "Glorot":
-            self.H          = float(np.sqrt(1.5/(num_inputs + num_units)))
+            self.H          = float(np.sqrt(1.5/(self.num_inputs + self.num_units)))
         else:
             self.H          = H
         
         if W_LR_scale == "Glorot":
-            self.W_LR_scale = float(np.sqrt(1.5/(num_inputs + num_units)))
+            self.W_LR_scale = float(np.sqrt(1.5/(self.num_inputs + self.num_units)))
         else:
             self.W_LR_scale = self.H
         
@@ -170,9 +169,12 @@ class Conv2dWAGE(torch.nn.Conv2d):
             self.bias.data.zero_()
     
     def constrain(self):
+        import ipdb as pdb; pdb.set_trace()
         self.weight.data.clamp_(-self.H, +self.H)
     
     def forward(self, x):
-        W = Quantize.W(self.W[-1], self.config['wbits'])
-        return TNF.conv2d(x, Wb, self.bias, self.stride, self.padding, self.dilation, self.groups)
+        # import ipdb as pdb; pdb.set_trace()
+        n=(self.num_inputs + self.num_units)
+        WQ = w_quant(self.weight, self.config['wbits'], n)
+        return TNF.conv2d(x, WQ, self.bias, self.stride, self.padding, self.dilation, self.groups)
 

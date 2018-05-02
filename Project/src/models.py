@@ -8,8 +8,7 @@ import torchvision.datasets as dsets
 import torchvision.transforms as transforms
 from torch.autograd import Variable
 import torch.nn.functional as F
-import Quantize
-from   functional   import *
+from Quantize import *
 from   layers       import *
 
 
@@ -143,20 +142,34 @@ class CNN(ModelConstrained):
 # WAGE Model (2 conv layer)
 class WAGE(ModelConstrained):
     def __init__(self, config):
-        super(WAGE, self).__init__()
-        self.config = config
-        self.cnn1 = nn.Conv2d(1, 16, kernel_size=5, padding=2)
-        self.cnn2 = nn.Conv2d(16, 32, kernel_size=5, padding=2)
-        self.fc = nn.Linear(7*7*32, 10)
-        self.batchnorm16 = nn.BatchNorm2d(16)
-        self.batchnorm32 = nn.BatchNorm2d(32)
-        self.maxpool2d = nn.MaxPool2d(2)
+        super().__init__()
+        self.dataset   = config['dataset']
+        inChan         =     1 if self.dataset == "mnist"    else  3
+        outChan        =   100 if self.dataset == "cifar100" else 10
+        epsilon        = 1e-4   # Some epsilon
+        alpha          = 1-0.9  # Exponential moving average factor for BN.
+        
+        self.conv1     = Conv2dWAGE(inChan, 16, (5,5), config=config, padding=1, H=1, W_LR_scale="Glorot")
+        self.conv2     = Conv2dWAGE(16, 32, (5,5), config=config, padding=1, H=1, W_LR_scale="Glorot")
+        self.fc        = nn.Linear(18432, 10)
 
+    
     def forward(self, x):
-        import ipdb as pdb; pdb.set_trace()
-        layer1_out = self.maxpool2d(self._activation(self.batchnorm16(self.cnn1(x))))
-        layer2_out = self.maxpool2d(self._activation(self.batchnorm32(self.cnn2(layer1_out))))
+        # import ipdb as pdb; pdb.set_trace()
+        layer1_out = self._activation(self.conv1(x))
+        layer2_out = self._activation(self.conv2(layer1_out))
         out = layer2_out.view(layer2_out.size(0), -1)
         out = self.fc(out)
         return out
+
+    def _activation(self, x):
+        x = F.relu(x)
+        # print(x)
+        return x
+    def loss(self, Ypred, Y):
+        onehotY   = torch.zeros_like(Ypred).scatter_(1, Y.unsqueeze(1), 1)*2 - 1
+        hingeLoss = torch.mean(torch.clamp(1.0 - Ypred*onehotY, min=0)**2)
+        return hingeLoss
+
+
 
