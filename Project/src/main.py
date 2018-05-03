@@ -52,9 +52,9 @@ def train_model(model, criterion, optimizer, train_loader, train_dataset, test_l
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
-            if (i+1) % 100 == 0:
-                print ('Epoch [%d/%d], Iter [%d/%d] Loss: %.4f' 
-                       %(epoch+1, num_epochs, i+1, len(train_dataset)//batch_size, loss.data[0]))
+            # if (i+1) % 100 == 0:
+            #     print ('Epoch [%d/%d], Iter [%d/%d] Loss: %.4f' 
+            #            %(epoch+1, num_epochs, i+1, len(train_dataset)//batch_size, loss.data[0]))
         test_model(test_loader)
 
 
