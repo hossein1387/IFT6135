@@ -152,14 +152,14 @@ class WAGE(ModelConstrained):
         self.conv1     = Conv2dWAGE(inChan, 16, (5,5), config=config, padding=1, H=1, W_LR_scale="Glorot")
         self.conv2     = Conv2dWAGE(16, 32, (5,5), config=config, padding=1, H=1, W_LR_scale="Glorot")
         self.fc1       = LinearWAGE(18432, 1024, config=config)
-        self.fc2       = nn.Linear(1024, 10)
+        self.fc2       = nn.Linear(18432, 10)
     
     def forward(self, x):
         # import ipdb as pdb; pdb.set_trace()
         layer1_out = self.conv1(x)
         layer2_out = self.conv2(layer1_out)
         out = layer2_out.view(layer2_out.size(0), -1)
-        out = self.fc1(out)
+        #out = self.fc1(out)
         out = self.fc2(out)
         return out
 
