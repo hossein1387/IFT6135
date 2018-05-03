@@ -1,4 +1,6 @@
 import torch 
+import torch.nn as nn
+import torch.nn.functional as F
 import math
 
 def S(bits):
@@ -70,19 +72,31 @@ def Q(x, bits):
         SCALE = S(bits)
         return torch.round(x * SCALE) / SCALE
 
-def E(x, bitsE):
-    if bitsE > 15:
+def E(x, ebits):
+    if ebits > 15:
         return x
     else:
         xmax = torch.max(torch.abs(x))
         xmax_shift = Shift(xmax)
-    return Q(C( x /xmax_shift, bitsE), bitsE)
+    return Q(C( x /xmax_shift, ebits), ebits)
 
-def A(x, abits):
-    x = C(x, abits)
-    y = Q(x, abits)
-    return x + (y - x)  # skip derivation of Quantize, but keep Clip
+class WAGEAQuant(torch.autograd.Function):
 
+    @staticmethod
+    def forward(ctx, x, abits):
+        ctx.save_for_backward(x)
+        x = F.relu(x)
+        x = C(x, abits)
+        y = Q(x, abits)
+        return x + (y - x)  # skip derivation of Quantize, but keep Clip
+
+    @staticmethod
+    def backward(ctx, dx):
+        ebits = 8
+        x, = ctx.saved_variables
+        g = E(x, ebits)
+        return dx*g, None, None
+a_quant = WAGEAQuant.apply
 
 class BNNSign(torch.autograd.Function):
     """
