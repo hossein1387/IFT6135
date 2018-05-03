@@ -37,7 +37,7 @@ def test_model(test_loader):
     print('Test Accuracy of the model on the 10000 test images: %d %%' % (100 * correct / total))
 
 
-def train_model(model, criterion, optimizer, train_loader, train_dataset, config):
+def train_model(model, criterion, optimizer, train_loader, train_dataset, test_loader, config):
     # Train the Model
     num_epochs = config['num_epochs']
     batch_size = config['batchsize']
@@ -55,6 +55,7 @@ def train_model(model, criterion, optimizer, train_loader, train_dataset, config
             if (i+1) % 100 == 0:
                 print ('Epoch [%d/%d], Iter [%d/%d] Loss: %.4f' 
                        %(epoch+1, num_epochs, i+1, len(train_dataset)//batch_size, loss.data[0]))
+        test_model(test_loader)
 
 
 if __name__ == '__main__':
@@ -66,7 +67,7 @@ if __name__ == '__main__':
     config = config.config_dict
     model, criterion, optimizer = build_model(config)
     train_loader, test_loader, train_dataset, test_dataset = utility.load_dataset(config)
-    train_model(model, criterion, optimizer, train_loader, train_dataset, config)
-    test_model(test_loader)
+    train_model(model, criterion, optimizer, train_loader, train_dataset, test_loader, config)
+    # test_model(test_loader)
     # Save the Trained Model
     torch.save(model.state_dict(), 'trained_model.pkl')
