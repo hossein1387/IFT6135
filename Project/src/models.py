@@ -146,30 +146,30 @@ class WAGE(ModelConstrained):
         self.dataset   = config['dataset']
         inChan         =     1 if self.dataset == "mnist"    else  3
         outChan        =   100 if self.dataset == "cifar100" else 10
-        epsilon        = 1e-4   # Some epsilon
-        alpha          = 1-0.9  # Exponential moving average factor for BN.
+        epsilon        =     1e-4   # Some epsilon
+        alpha          =     1-0.9  # Exponential moving average factor for BN.
         
         self.conv1     = Conv2dWAGE(inChan, 16, (5,5), config=config, padding=1, H=1, W_LR_scale="Glorot")
         self.conv2     = Conv2dWAGE(16, 32, (5,5), config=config, padding=1, H=1, W_LR_scale="Glorot")
-        self.fc        = nn.Linear(18432, 10)
-
+        self.fc1       = LinearWAGE(18432, 1024, config=config)
+        self.fc2       = nn.Linear(1024, 10)
     
     def forward(self, x):
         # import ipdb as pdb; pdb.set_trace()
-        layer1_out = self._activation(self.conv1(x))
-        layer2_out = self._activation(self.conv2(layer1_out))
+        layer1_out = self.conv1(x)
+        layer2_out = self.conv2(layer1_out)
         out = layer2_out.view(layer2_out.size(0), -1)
-        out = self.fc(out)
+        out = self.fc1(out)
+        out = self.fc2(out)
         return out
 
     def _activation(self, x):
-        x = F.relu(x)
-        # print(x)
-        return x
+       x = F.relu(x)
+       x = self._QE(x)
+       x = self._QA(x)
+       return x
+
     def loss(self, Ypred, Y):
         onehotY   = torch.zeros_like(Ypred).scatter_(1, Y.unsqueeze(1), 1)*2 - 1
         hingeLoss = torch.mean(torch.clamp(1.0 - Ypred*onehotY, min=0)**2)
         return hingeLoss
-
-
-
