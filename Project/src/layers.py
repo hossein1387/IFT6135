@@ -176,5 +176,48 @@ class Conv2dWAGE(torch.nn.Conv2d):
         # import ipdb as pdb; pdb.set_trace()
         n=(self.num_inputs + self.num_units)
         WQ = w_quant(self.weight, self.config['wbits'], n)
-        return TNF.conv2d(x, WQ, self.bias, self.stride, self.padding, self.dilation, self.groups)
+        return a_quant(TNF.conv2d(x, WQ, self.bias, self.stride, self.padding, self.dilation, self.groups), self.config['abits'])
 
+class LinearWAGE(torch.nn.Linear):
+    """
+    Linear/Dense layer for BinaryNet.
+    """
+    
+    def __init__(self, in_channels,
+                       out_channels,
+                       config,
+                       bias         = True,
+                       H            = 1.0,
+                       W_LR_scale   = "Glorot"):
+        #
+        # Fan-in/fan-out computation
+        #
+        self.config = config
+        self.num_inputs = in_channels
+        self.num_units  = out_channels
+        if H == "Glorot":
+            self.H          = float(np.sqrt(1.5/(self.num_inputs + self.num_units)))
+        else:
+            self.H          = H
+        
+        if W_LR_scale == "Glorot":
+            self.W_LR_scale = float(np.sqrt(1.5/(self.num_inputs + self.num_units)))
+        else:
+            self.W_LR_scale = self.H
+        
+        super().__init__(in_channels, out_channels, bias)
+        self.reset_parameters()
+    
+    def reset_parameters(self):
+        self.weight.data.uniform_(-self.H, +self.H)
+        if isinstance(self.bias, torch.nn.Parameter):
+            self.bias.data.zero_()
+    
+    def constrain(self):
+        self.weight.data.clamp_(-self.H, +self.H)
+    
+    def forward(self, x):
+        # import ipdb as pdb; pdb.set_trace()
+        n=(self.num_inputs + self.num_units)
+        WQ = w_quant(self.weight, self.config['wbits'], n)
+        return a_quant(TNF.linear(x, WQ, self.bias), self.config['abits'])
