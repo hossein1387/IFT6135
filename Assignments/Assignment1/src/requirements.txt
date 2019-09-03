@@ -3,4 +3,4 @@ ipdb==0.11
 numpy==1.14.0
 pandas==0.22.0
 seaborn==0.8.1
-PyYAML==3.12
+pyyaml>=4.2b1
